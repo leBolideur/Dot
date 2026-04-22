@@ -80,6 +80,8 @@ let rec print_ast ast =
       Printf.printf ")"
 
 let rec eval ast =
+  print_ast ast;
+  
   match ast with
   | Int nb -> nb
   | Var (_, expr) -> eval expr
@@ -93,7 +95,7 @@ let parse_expression tokens =
   (* [Lexer.LPAREN; Lexer.Int 2; Lexer.PLUS; Lexer.Int 3; Lexer.RPAREN; Lexer.STAR; Lexer.Int 4 ] *)
   (* in *)
   let ast, _ = parse_add tokens in
-  print_ast ast;
+  (* print_ast ast; *)
   (* Printf.printf " Result >>> %d\n" (eval ast); *)
   (* print_endline "Parsing done!" *)
   (* eval ast *)
@@ -103,21 +105,30 @@ let parse_var_st name tokens =
   let right, rest = parse_expression tokens in
   (Var (name, right), rest)
 
-
+(*
 let parse_statement tokens = 
   match tokens with
   | [] -> []
   | { kind = VAR name } :: { kind = EQ } :: tl -> 
-    parse_var_st name tl
-  | _ -> failwith "Unknown statement"
+    let node, rest = parse_var_st name tl in
+    (node, rest)
+  | _ -> parse_expression tokens (* failwith "Unknown statement" *)
+  *)
 
 let rec parse tokens stmts = 
-  Printf.printf "BF >> tokens length = %d\n" (List.length tokens);
+  (* Printf.printf "BF >> tokens length = %d\n" (List.length tokens); *)
+  (* let stmt, rest = parse_statement tokens in *)
 
   match tokens with
-  | { kind = EOF } ->
-    print_endline "End of parse";
-    Printf.printf "AF >> acc length = %d ------ rest length = %d\n" (List.length stmts) (List.length rest)
-  | _ ->
-    let stmt, rest = parse_statement tokens [] in
-    parse rest (stmt :: stmts)
+  | [] -> stmts
+  | { kind = EOF } :: [] ->
+    print_endline "\nEnd of parse";
+    (* Printf.printf "AF >> acc length = %d ------ rest length = %d\n" (List.length stmts) (List.length tl); *)
+    stmts
+  | { kind = VAR name } :: { kind = EQ } :: tl -> 
+    let node, rest = parse_var_st name tl in
+    parse rest (node :: stmts)
+  | { kind = Int _ } :: _ | { kind = LPAREN } :: _ -> 
+    let node, rest = parse_expression tokens in
+    parse rest (node :: stmts)
+  | _ :: tl -> parse tl stmts
