@@ -1,6 +1,7 @@
 open Lexer
 
 type ast =
+  | Var of string * ast
   | Int of int
   | Add of ast * ast
   | Minus of ast * ast
@@ -52,6 +53,7 @@ and parse_add_aux left rest =
 let rec print_ast ast =
   match ast with
   | Int nb -> Printf.printf "%d" nb
+  | Var (name, expr) -> Printf.printf "VAR %s = " name; print_ast expr
   | Add (left, right) ->
       Printf.printf "(";
       print_ast left;
@@ -80,12 +82,13 @@ let rec print_ast ast =
 let rec eval ast =
   match ast with
   | Int nb -> nb
+  | Var (_, expr) -> eval expr
   | Add (left, right) -> eval left + eval right
   | Minus (left, right) -> eval left - eval right
   | Mul (left, right) -> eval left * eval right
   | Div (left, right) -> eval left / eval right
 
-let parse_expr tokens =
+let parse_expression tokens =
   (* let tokens = *)
   (* [Lexer.LPAREN; Lexer.Int 2; Lexer.PLUS; Lexer.Int 3; Lexer.RPAREN; Lexer.STAR; Lexer.Int 4 ] *)
   (* in *)
@@ -93,4 +96,28 @@ let parse_expr tokens =
   print_ast ast;
   (* Printf.printf " Result >>> %d\n" (eval ast); *)
   (* print_endline "Parsing done!" *)
-  eval ast
+  (* eval ast *)
+  (ast, List.tl tokens)
+
+let parse_var_st name tokens = 
+  let right, rest = parse_expression tokens in
+  (Var (name, right), rest)
+
+
+let parse_statement tokens = 
+  match tokens with
+  | [] -> []
+  | { kind = VAR name } :: { kind = EQ } :: tl -> 
+    parse_var_st name tl
+  | _ -> failwith "Unknown statement"
+
+let rec parse tokens stmts = 
+  Printf.printf "BF >> tokens length = %d\n" (List.length tokens);
+
+  match tokens with
+  | { kind = EOF } ->
+    print_endline "End of parse";
+    Printf.printf "AF >> acc length = %d ------ rest length = %d\n" (List.length stmts) (List.length rest)
+  | _ ->
+    let stmt, rest = parse_statement tokens [] in
+    parse rest (stmt :: stmts)
