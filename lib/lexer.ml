@@ -149,4 +149,3 @@ let rec lex input state tokens =
       let token = { kind = EOF } in
       token :: tokens
   | _ -> lex input (advance state) tokens
-
