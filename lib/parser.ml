@@ -124,10 +124,12 @@ let rec eval_ast ast =
   | Mul (left, right) -> eval_ast left * eval_ast right
   | Div (left, right) -> eval_ast left / eval_ast right
 
-let rec eval program env =
-  match program with
+let rec eval program_stmts env =
+  match program_stmts with
   | [] -> env
-  | Decl_st (_, _) :: tl -> eval tl env
+  | Decl_st (name, ast) :: tl ->
+      Printf.printf "Eval Decl_st for %s >>> %d\n" name (eval_ast ast);
+      eval tl env
   | Expr_st ast :: tl ->
       Printf.printf "Eval Expr_st >>> %d\n" (eval_ast ast);
       eval tl env
