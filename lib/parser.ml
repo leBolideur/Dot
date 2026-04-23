@@ -2,7 +2,7 @@ open Lexer
 
 type ast =
   | Int of int
-  | Var of string * ast
+  | Var of string
   | Add of ast * ast
   | Minus of ast * ast
   | Mul of ast * ast
@@ -19,6 +19,9 @@ let rec parse_primary tokens =
       match rest with
       | { kind = RPAREN } :: tl' -> (right, tl')
       | _ -> failwith "Missing RPAREN")
+  | { kind = VAR name } :: tl ->
+      Printf.printf "parse_primary > VAR name = %s\n" name;
+      (Var name, tl)
   | _ -> failwith "Fail parse_primary"
 
 and parse_factor tokens =
@@ -56,8 +59,7 @@ and parse_add_aux left rest =
 let rec print_ast ast =
   match ast with
   | Int nb -> Printf.printf "%d" nb
-  | Var (name, _) -> Printf.printf "VAR %s = " name
-  (* print_ast expr *)
+  | Var name -> Printf.printf "VAR %s = " name
   | Add (left, right) ->
       Printf.printf "(";
       print_ast left;
@@ -88,8 +90,8 @@ let parse_expression tokens =
   (ast, rest)
 
 let parse_var_st name tokens =
-  let ast, rest = parse_expression tokens in
-  (Var (name, ast), rest)
+  let _, rest = parse_expression tokens in
+  (Var name, rest)
 
 let rec parse tokens stmts =
   match tokens with
@@ -99,12 +101,14 @@ let rec parse tokens stmts =
       Program stmts
   | { kind = NEWLINE } :: tl -> parse tl stmts
   | { kind = VAR name } :: { kind = ASSIGN } :: tl ->
+      Printf.printf "DECL VAR, name = %s\n" name;
       let node, rest = parse_var_st name tl in
       let stmt = Decl_st (name, node) in
       parse rest (stmt :: stmts)
   | { kind = VAR name } :: tl ->
-      Printf.printf "yep, name = %s\n" name;
-      parse tl stmts
+      Printf.printf "IDENT VAR, name = %s\n" name;
+      let stmt = Expr_st (Var name) in
+      parse tl (stmt :: stmts)
   | { kind = Int _ } :: _ | { kind = LPAREN } :: _ ->
       let node, rest = parse_expression tokens in
       let stmt = Expr_st node in
@@ -114,7 +118,7 @@ let rec parse tokens stmts =
 let rec eval_ast ast =
   match ast with
   | Int nb -> nb
-  | Var (name, ast) -> Printf.printf "VAR %s = %d\n" name (eval_ast ast); eval_ast ast
+  | Var name -> Printf.printf "VAR %s = %d\n" name (eval_ast ast); 66
   | Add (left, right) -> eval_ast left + eval_ast right
   | Minus (left, right) -> eval_ast left - eval_ast right
   | Mul (left, right) -> eval_ast left * eval_ast right
