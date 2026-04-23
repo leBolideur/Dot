@@ -11,11 +11,8 @@ let () =
 
   let var_tokens = Dot.Lexer.lex "X = 2 + 2" state [] in
 
-  (* let math_tokens = Dot.Lexer.lex "1 + 2 * 3" state [] in *)
-  (* List.iter Dot.Lexer.print_token (List.rev math_tokens); *)
-
-  let ast = Dot.Parser.parse (List.rev var_tokens) [] in
-  Dot.Parser.eval ast;
+  let statements  = Dot.Parser.parse (List.rev var_tokens) [] in
+  let _ = Dot.Parser.eval statements [] in
   (* Printf.printf "Result >>> %d\n" result *)
 
   print_endline "so far, so good!"
