@@ -56,9 +56,8 @@ and parse_add_aux left rest =
 let rec print_ast ast =
   match ast with
   | Int nb -> Printf.printf "%d" nb
-  | Var (name,_) ->
-      Printf.printf "VAR %s = " name;
-      (* print_ast expr *)
+  | Var (name, _) -> Printf.printf "VAR %s = " name
+  (* print_ast expr *)
   | Add (left, right) ->
       Printf.printf "(";
       print_ast left;
@@ -101,6 +100,7 @@ let rec parse tokens stmts =
   | { kind = EOF } :: [] ->
       print_endline "\nEnd of parse";
       stmts
+  | { kind = NEWLINE } :: tl -> parse tl stmts
   | { kind = VAR name } :: { kind = EQ } :: tl ->
       let node, rest = parse_var_st name tl in
       let stmt = Decl_st (name, node) in
@@ -114,7 +114,7 @@ let rec parse tokens stmts =
 let rec eval_ast ast =
   match ast with
   | Int nb -> nb
-  | Var (_, value) -> value
+  | Var (name, value) -> Printf.printf "VAR %s = %d\n" name value; value
   | Add (left, right) -> eval_ast left + eval_ast right
   | Minus (left, right) -> eval_ast left - eval_ast right
   | Mul (left, right) -> eval_ast left * eval_ast right
