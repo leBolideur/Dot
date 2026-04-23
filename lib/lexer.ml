@@ -1,8 +1,8 @@
 type token_type =
   | Int of int
-  | Ident of string
+  | IDENT of string
   | VAR of string
-  | Str_lit of string
+  | STR_LIT of string
   | Dot
   | EOF
   | ASSIGN
@@ -27,9 +27,9 @@ type state = { index : int; line : int }
 let print_token token =
   match token.kind with
   | Int nb -> Printf.printf "INT : %d\n" nb
-  | Ident ident -> Printf.printf "IDENT : %s\n" ident
+  | IDENT ident -> Printf.printf "IDENT : %s\n" ident
   | VAR name -> Printf.printf "VAR : %s\n" name
-  | Str_lit str -> Printf.printf "STRING : %s\n" str
+  | STR_LIT str -> Printf.printf "STRING : %s\n" str
   | Dot -> print_endline "DOT ."
   | ASSIGN -> print_endline "ASSIGN"
   | EQ -> print_endline "EQ"
@@ -88,7 +88,7 @@ let rec lex input state tokens =
       lex input (advance state) (token :: tokens)
   | Some 'a' .. 'z' ->
       let state, result = read_ident input state state.index in
-      let token = { kind = Ident result } in
+      let token = { kind = IDENT result } in
       lex input state (token :: tokens)
   | Some 'A' .. 'Z' ->
       let state, result = read_ident input state state.index in
@@ -104,7 +104,7 @@ let rec lex input state tokens =
       let state, result =
         read_string_literal input advanced_state advanced_state.index
       in
-      let token = { kind = Str_lit result } in
+      let token = { kind = STR_LIT result } in
       lex input (advance state) (token :: tokens)
   | Some '=' when is_next_char input state '=' ->
       let token = { kind = EQ } in

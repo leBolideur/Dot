@@ -2,14 +2,14 @@ open Lexer
 
 type ast =
   | Int of int
-  | Var of string * int
+  | Var of string * ast
   | Add of ast * ast
   | Minus of ast * ast
   | Mul of ast * ast
   | Div of ast * ast
 
-type statement = Decl_st of string * statement | Expr_st of ast
-type program = statement list
+type statement = Decl_st of string * ast | Expr_st of ast
+type program = Program of statement list
 
 let rec parse_primary tokens =
   match tokens with
@@ -85,36 +85,36 @@ let rec print_ast ast =
 
 let parse_expression tokens =
   let ast, rest = parse_add tokens in
-  let expr = Expr_st ast in
-  (* let right, rest = parse_expression tokens in *)
-  (expr, rest)
+  (ast, rest)
 
 let parse_var_st name tokens =
-  let expr, rest = parse_expression tokens in
-  let stmt = Decl_st (name, expr) in
-  (stmt, rest)
+  let ast, rest = parse_expression tokens in
+  (Var (name, ast), rest)
 
 let rec parse tokens stmts =
   match tokens with
-  | [] -> stmts
+  | [] -> Program stmts
   | { kind = EOF } :: [] ->
       print_endline "\nEnd of parse";
-      stmts
+      Program stmts
   | { kind = NEWLINE } :: tl -> parse tl stmts
-  | { kind = VAR name } :: { kind = EQ } :: tl ->
+  | { kind = VAR name } :: { kind = ASSIGN } :: tl ->
       let node, rest = parse_var_st name tl in
       let stmt = Decl_st (name, node) in
       parse rest (stmt :: stmts)
+  | { kind = VAR name } :: tl ->
+      Printf.printf "yep, name = %s\n" name;
+      parse tl stmts
   | { kind = Int _ } :: _ | { kind = LPAREN } :: _ ->
       let node, rest = parse_expression tokens in
-      (* let stmt = Expr_st node in *)
-      parse rest (node :: stmts)
-  | _ :: tl -> parse tl stmts
+      let stmt = Expr_st node in
+      parse rest (stmt :: stmts)
+  | _ :: tl -> print_endline "Unknown"; parse tl stmts
 
 let rec eval_ast ast =
   match ast with
   | Int nb -> nb
-  | Var (name, value) -> Printf.printf "VAR %s = %d\n" name value; value
+  | Var (name, ast) -> Printf.printf "VAR %s = %d\n" name (eval_ast ast); eval_ast ast
   | Add (left, right) -> eval_ast left + eval_ast right
   | Minus (left, right) -> eval_ast left - eval_ast right
   | Mul (left, right) -> eval_ast left * eval_ast right
@@ -125,5 +125,5 @@ let rec eval program env =
   | [] -> env
   | Decl_st (_, _) :: tl -> eval tl env
   | Expr_st ast :: tl ->
-      Printf.printf "Eval >>> %d\n" (eval_ast ast);
+      Printf.printf "Eval Expr_st >>> %d\n" (eval_ast ast);
       eval tl env
