@@ -103,7 +103,7 @@ let rec parse tokens stmts =
       { statements = stmts}
   | { kind = NEWLINE } :: tl -> parse tl stmts
   | { kind = VAR name } :: { kind = ASSIGN } :: tl ->
-      Printf.printf "DECL VAR, name = %s\n" name;
+      (* Printf.printf "DECL VAR, name = %s\n" name; *)
       let node, rest = parse_expression tl in
       let stmt = Decl_st (name, node) in
       parse rest (stmt :: stmts)
@@ -138,10 +138,8 @@ let rec eval_ast ast env =
   | Int nb -> nb
   | Var name -> (
       match find_in_env name env with
-      | None -> Printf.printf "UNBOUND %s\n" name; failwith "Unbound variable"
-      | Some value ->
-          Printf.printf "VAR %s = %d\n" name (eval_ast ast env);
-          value)
+      | None -> failwith "Unbound variable"
+      | Some value -> value)
   | Add (left, right) -> eval_ast left env + eval_ast right env
   | Minus (left, right) -> eval_ast left env - eval_ast right env
   | Mul (left, right) -> eval_ast left env * eval_ast right env
