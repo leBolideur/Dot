@@ -1,5 +1,7 @@
 open Lexer
 
+type env_entry = { name : string; value : int }
+
 type ast =
   | Int of int
   | Var of string
@@ -9,7 +11,7 @@ type ast =
   | Div of ast * ast
 
 type statement = Decl_st of string * ast | Expr_st of ast
-type program = Program of statement list
+(* type program = { statements : statement list } *)
 
 let rec parse_primary tokens =
   match tokens with
@@ -95,10 +97,10 @@ let parse_var_st name tokens =
 
 let rec parse tokens stmts =
   match tokens with
-  | [] -> Program stmts
+  | [] -> stmts
   | { kind = EOF } :: [] ->
       print_endline "\nEnd of parse";
-      Program stmts
+      stmts
   | { kind = NEWLINE } :: tl -> parse tl stmts
   | { kind = VAR name } :: { kind = ASSIGN } :: tl ->
       Printf.printf "DECL VAR, name = %s\n" name;
@@ -113,23 +115,46 @@ let rec parse tokens stmts =
       let node, rest = parse_expression tokens in
       let stmt = Expr_st node in
       parse rest (stmt :: stmts)
-  | _ :: tl -> print_endline "Unknown"; parse tl stmts
+  | _ :: tl ->
+      print_endline "Unknown";
+      parse tl stmts
 
-let rec eval_ast ast =
+let rec find_in_env var_name env =
+  match env with
+  | [] -> None
+  | { name = env_name; value = env_value } :: _ when var_name = env_name ->
+      Some env_value
+  | _ :: tl -> find_in_env var_name tl
+
+let rec print_env env =
+  match env with
+  | [] -> print_endline "End of env"
+  | { name = var_name; value = var_value } :: tl ->
+      Printf.printf "VAR %s = %d\n" var_name var_value;
+      print_env tl
+
+let rec eval_ast ast env =
   match ast with
   | Int nb -> nb
-  | Var name -> Printf.printf "VAR %s = %d\n" name (eval_ast ast); 66
-  | Add (left, right) -> eval_ast left + eval_ast right
-  | Minus (left, right) -> eval_ast left - eval_ast right
-  | Mul (left, right) -> eval_ast left * eval_ast right
-  | Div (left, right) -> eval_ast left / eval_ast right
+  | Var name -> (
+      match find_in_env name env with
+      | None -> failwith "Unbound variable"
+      | Some value ->
+          Printf.printf "VAR %s = %d\n" name (eval_ast ast env);
+          value)
+  | Add (left, right) -> eval_ast left env + eval_ast right env
+  | Minus (left, right) -> eval_ast left env - eval_ast right env
+  | Mul (left, right) -> eval_ast left env * eval_ast right env
+  | Div (left, right) -> eval_ast left env / eval_ast right env
 
 let rec eval program_stmts env =
   match program_stmts with
   | [] -> env
-  | Decl_st (name, ast) :: tl ->
-      Printf.printf "Eval Decl_st for %s >>> %d\n" name (eval_ast ast);
-      eval tl env
+  | Decl_st (var_name, ast) :: tl ->
+      let var = { name = var_name; value = eval_ast ast env } in
+      Printf.printf "Eval Decl_st for %s >>> %d\n" var_name var.value;
+      print_env env;
+      eval tl (var :: env)
   | Expr_st ast :: tl ->
-      Printf.printf "Eval Expr_st >>> %d\n" (eval_ast ast);
+      Printf.printf "Eval Expr_st >>> %d\n" (eval_ast ast env);
       eval tl env
