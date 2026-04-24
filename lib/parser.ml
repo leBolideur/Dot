@@ -11,7 +11,7 @@ type ast =
   | Div of ast * ast
 
 type statement = Decl_st of string * ast | Expr_st of ast
-(* type program = { statements : statement list } *)
+type program = { statements : statement list }
 
 let rec parse_primary tokens =
   match tokens with
@@ -97,14 +97,14 @@ let parse_var_st name tokens =
 
 let rec parse tokens stmts =
   match tokens with
-  | [] -> stmts
+  | [] -> { statements = stmts}
   | { kind = EOF } :: [] ->
       print_endline "\nEnd of parse";
-      stmts
+      { statements = stmts}
   | { kind = NEWLINE } :: tl -> parse tl stmts
   | { kind = VAR name } :: { kind = ASSIGN } :: tl ->
       Printf.printf "DECL VAR, name = %s\n" name;
-      let node, rest = parse_var_st name tl in
+      let node, rest = parse_expression tl in
       let stmt = Decl_st (name, node) in
       parse rest (stmt :: stmts)
   | { kind = VAR name } :: tl ->
@@ -122,7 +122,7 @@ let rec parse tokens stmts =
 let rec find_in_env var_name env =
   match env with
   | [] -> None
-  | { name = env_name; value = env_value } :: _ when var_name = env_name ->
+  | { name = env_name; value = env_value } :: _ when env_name = var_name ->
       Some env_value
   | _ :: tl -> find_in_env var_name tl
 
@@ -138,7 +138,7 @@ let rec eval_ast ast env =
   | Int nb -> nb
   | Var name -> (
       match find_in_env name env with
-      | None -> failwith "Unbound variable"
+      | None -> Printf.printf "UNBOUND %s\n" name; failwith "Unbound variable"
       | Some value ->
           Printf.printf "VAR %s = %d\n" name (eval_ast ast env);
           value)
@@ -151,7 +151,7 @@ let rec eval program_stmts env =
   match program_stmts with
   | [] -> env
   | Decl_st (var_name, ast) :: tl ->
-      let var = { name = var_name; value = eval_ast ast env } in
+      let var = { name = var_name; value = (eval_ast ast env) } in
       Printf.printf "Eval Decl_st for %s >>> %d\n" var_name var.value;
       print_env env;
       eval tl (var :: env)
