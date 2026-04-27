@@ -1,6 +1,6 @@
 open Lexer
 
-type env_entry = { name : string; value : int }
+type env_entry = { name : string; value : int; history : int list }
 
 type ast =
   | Int of int
@@ -97,10 +97,10 @@ let parse_var_st name tokens =
 
 let rec parse tokens stmts =
   match tokens with
-  | [] -> { statements = stmts}
+  | [] -> { statements = stmts }
   | { kind = EOF } :: [] ->
       print_endline "\nEnd of parse";
-      { statements = stmts}
+      { statements = stmts }
   | { kind = NEWLINE } :: tl -> parse tl stmts
   | { kind = VAR name } :: { kind = ASSIGN } :: tl ->
       (* Printf.printf "DECL VAR, name = %s\n" name; *)
@@ -122,14 +122,13 @@ let rec parse tokens stmts =
 let rec find_in_env var_name env =
   match env with
   | [] -> None
-  | { name = env_name; value = env_value } :: _ when env_name = var_name ->
-      Some env_value
+  | entry :: _ when entry.name = var_name -> Some entry
   | _ :: tl -> find_in_env var_name tl
 
 let rec print_env env =
   match env with
   | [] -> print_endline "End of env"
-  | { name = var_name; value = var_value } :: tl ->
+  | { name = var_name; value = var_value; history = _ } :: tl ->
       Printf.printf "VAR %s = %d\n" var_name var_value;
       print_env tl
 
@@ -139,7 +138,7 @@ let rec eval_ast ast env =
   | Var name -> (
       match find_in_env name env with
       | None -> failwith "Unbound variable"
-      | Some value -> value)
+      | Some entry -> entry.value)
   | Add (left, right) -> eval_ast left env + eval_ast right env
   | Minus (left, right) -> eval_ast left env - eval_ast right env
   | Mul (left, right) -> eval_ast left env * eval_ast right env
@@ -149,10 +148,30 @@ let rec eval program_stmts env =
   match program_stmts with
   | [] -> env
   | Decl_st (var_name, ast) :: tl ->
-      let var = { name = var_name; value = (eval_ast ast env) } in
-      Printf.printf "Eval Decl_st for %s >>> %d\n" var_name var.value;
-      print_env env;
-      eval tl (var :: env)
+      let new_env =
+        match find_in_env var_name env with
+        | None ->
+            print_endline "not existing in env";
+            let var =
+              { name = var_name; value = eval_ast ast env; history = [] }
+            in
+            Printf.printf "Eval Decl_st for %s >>> %d\n" var_name var.value;
+            (* print_env env; *)
+            var :: env
+        | Some entry ->
+            Printf.printf "Exist with value: %d\n" entry.value;
+            let var =
+              {
+                name = var_name;
+                value = eval_ast ast env;
+                history = entry.value :: entry.history;
+              }
+            in
+            Printf.printf "Eval Decl_st for %s >>> %d\n" var_name var.value;
+            (* print_env env; *)
+            var :: env
+      in
+      eval tl new_env
   | Expr_st ast :: tl ->
       Printf.printf "Eval Expr_st >>> %d\n" (eval_ast ast env);
       eval tl env
