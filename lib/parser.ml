@@ -1,6 +1,6 @@
 open Lexer
 
-type env_entry = { name : string; value : int; history : int list }
+type env_entry = { name : string; freezed : bool; value : int; history : int list }
 
 type ast =
   | Int of int
@@ -10,7 +10,7 @@ type ast =
   | Mul of ast * ast
   | Div of ast * ast
 
-type statement = Decl_st of string * ast | Expr_st of ast
+type statement = Decl_st of string * ast |  Decl_st_freeze of string * ast | Expr_st of ast
 type program = { statements : statement list }
 
 let rec parse_primary tokens =
@@ -102,19 +102,33 @@ let rec parse tokens stmts =
       (* print_endline "\nEnd of parse"; *)
       { statements = stmts }
   | { kind = NEWLINE } :: tl -> parse tl stmts
+
   | { kind = VAR name } :: { kind = ASSIGN } :: tl ->
       (* Printf.printf "DECL VAR, name = %s\n" name; *)
       let node, rest = parse_expression tl in
-      let stmt = Decl_st (name, node) in
-      parse rest (stmt :: stmts)
+
+      (match rest with
+      | { kind = DOT } :: tl ->
+        let stmt = Decl_st_freeze (name, node) in
+        parse tl (stmt :: stmts)
+      | _ ->
+        let stmt = Decl_st (name, node) in
+        parse rest (stmt :: stmts))
+
+   | { kind = VAR name } :: { kind = DOT } :: tl ->
+      Printf.printf "IDENT FREEZE, name = %s\n" name;
+      let stmt = Expr_st (Var name) in
+      parse tl (stmt :: stmts)
   | { kind = VAR name } :: tl ->
       Printf.printf "IDENT VAR, name = %s\n" name;
       let stmt = Expr_st (Var name) in
       parse tl (stmt :: stmts)
+ 
   | { kind = Int _ } :: _ | { kind = LPAREN } :: _ ->
       let node, rest = parse_expression tokens in
       let stmt = Expr_st node in
       parse rest (stmt :: stmts)
+
   | _ :: tl ->
       print_endline "Unknown";
       parse tl stmts
@@ -128,7 +142,7 @@ let rec find_in_env var_name env =
 let rec print_env env =
   match env with
   | [] -> print_endline "End of env"
-  | { name = var_name; value = var_value; history = _ } :: tl ->
+  | { name = var_name; freezed = _; value = var_value; history = _ } :: tl ->
       Printf.printf "VAR %s = %d\n" var_name var_value;
       print_env tl
 
@@ -145,15 +159,19 @@ let rec eval_ast ast env =
   | Div (left, right) -> eval_ast left env / eval_ast right env
 
 let update_variable ast var = 
-  let new_value = ast in
-  let new_history = List.rev (new_value :: var.history) in
-  let new_var = {
-    name = var.name;
-    value = new_value;
-    history = new_history;
-  } in
-  Printf.printf "Update var for %s >>> %d\n" var.name new_var.value;
-  new_var
+  match var.freezed with
+  | true -> failwith "Freezed variable!"
+  | false ->
+    let new_value = ast in
+    let new_history = List.rev (new_value :: var.history) in
+    let new_var = {
+      name = var.name;
+      freezed = false;
+      value = new_value;
+      history = new_history;
+    } in
+    Printf.printf "Update var for %s >>> %d\n" var.name new_var.value;
+    new_var
 
 let rec print_var_history var index = 
   match var.history with
@@ -179,7 +197,7 @@ let rec eval program_stmts env =
             Printf.printf "%s not existing in env\n" var_name;
             let value = eval_ast ast env in
             let var =
-              { name = var_name; value = value; history = value :: [] }
+              { name = var_name; freezed = false; value = value; history = value :: [] }
             in
             (* Printf.printf "Eval Decl_st for %s >>> %d\n" var_name var.value; *)
             (* print_env env; *)
@@ -192,6 +210,27 @@ let rec eval program_stmts env =
             (* print_env env; *)
             let new_env = pop_env_by_var_name env updated_var.name in
             updated_var :: new_env
+      in
+      eval tl new_env
+  | Decl_st_freeze (var_name, ast) :: tl ->
+      let new_env =
+        match find_in_env var_name env with
+        | None ->
+            Printf.printf "freeze - %s not existing in env\n" var_name;
+            let value = eval_ast ast env in
+            let var =
+              { name = var_name; freezed = true; value = value; history = value :: [] }
+            in
+            var :: env
+        | Some entry ->
+            Printf.printf "freeze - %s Exist with value: %d\n" entry.name entry.value;
+            let updated_var = update_variable (eval_ast ast env) entry in
+            let freezed_var = { updated_var with freezed = true } in
+            print_endline "\nHistory:\nFREEZED DECL.!";
+            print_var_history freezed_var 0;
+            (* print_env env; *)
+            let new_env = pop_env_by_var_name env freezed_var.name in
+            freezed_var :: new_env
       in
       eval tl new_env
   | Expr_st ast :: tl ->

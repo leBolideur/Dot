@@ -3,7 +3,7 @@ type token_type =
   | IDENT of string
   | VAR of string
   | STR_LIT of string
-  | Dot
+  | DOT
   | EOF
   | ASSIGN
   | EQ
@@ -30,7 +30,7 @@ let print_token token =
   | IDENT ident -> Printf.printf "IDENT : %s\n" ident
   | VAR name -> Printf.printf "VAR : %s\n" name
   | STR_LIT str -> Printf.printf "STRING : %s\n" str
-  | Dot -> print_endline "DOT ."
+  | DOT -> print_endline "DOT ."
   | ASSIGN -> print_endline "ASSIGN"
   | EQ -> print_endline "EQ"
   | GT -> print_endline "GT"
@@ -84,7 +84,7 @@ let rec lex input state tokens =
     let token = { kind = NEWLINE} in
       lex input { index = state.index + 1; line = state.line + 1 } (token :: tokens)
   | Some '.' ->
-      let token = { kind = Dot } in
+      let token = { kind = DOT } in
       lex input (advance state) (token :: tokens)
   | Some 'a' .. 'z' ->
       let state, result = read_ident input state state.index in
