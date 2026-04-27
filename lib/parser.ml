@@ -22,7 +22,7 @@ let rec parse_primary tokens =
       | { kind = RPAREN } :: tl' -> (right, tl')
       | _ -> failwith "Missing RPAREN")
   | { kind = VAR name } :: tl ->
-      Printf.printf "parse_primary > VAR name = %s\n" name;
+      (* Printf.printf "parse_primary > VAR name = %s\n" name; *)
       (Var name, tl)
   | _ -> failwith "Fail parse_primary"
 
@@ -99,7 +99,7 @@ let rec parse tokens stmts =
   match tokens with
   | [] -> { statements = stmts }
   | { kind = EOF } :: [] ->
-      print_endline "\nEnd of parse";
+      (* print_endline "\nEnd of parse"; *)
       { statements = stmts }
   | { kind = NEWLINE } :: tl -> parse tl stmts
   | { kind = VAR name } :: { kind = ASSIGN } :: tl ->
@@ -144,6 +144,31 @@ let rec eval_ast ast env =
   | Mul (left, right) -> eval_ast left env * eval_ast right env
   | Div (left, right) -> eval_ast left env / eval_ast right env
 
+let update_variable ast var = 
+  let new_value = ast in
+  let new_history = List.rev (new_value :: var.history) in
+  let new_var = {
+    name = var.name;
+    value = new_value;
+    history = new_history;
+  } in
+  Printf.printf "Update var for %s >>> %d\n" var.name new_var.value;
+  new_var
+
+let rec print_var_history var index = 
+  match var.history with
+  | [] ->  print_endline "No history"
+  | _ :: _ when (index >= List.length var.history) -> print_endline "End history"
+  | _ :: _ -> 
+    Printf.printf "%s@%d = %d\n" var.name index (List.nth var.history index);
+    print_var_history var (index + 1)
+
+let rec pop_env_by_var_name env name = 
+  match env with
+  | [] -> []
+  | hd :: tl when hd.name == name -> tl
+  | _ :: tl -> pop_env_by_var_name tl name
+
 let rec eval program_stmts env =
   match program_stmts with
   | [] -> env
@@ -151,25 +176,22 @@ let rec eval program_stmts env =
       let new_env =
         match find_in_env var_name env with
         | None ->
-            print_endline "not existing in env";
+            Printf.printf "%s not existing in env\n" var_name;
+            let value = eval_ast ast env in
             let var =
-              { name = var_name; value = eval_ast ast env; history = [] }
+              { name = var_name; value = value; history = value :: [] }
             in
-            Printf.printf "Eval Decl_st for %s >>> %d\n" var_name var.value;
+            (* Printf.printf "Eval Decl_st for %s >>> %d\n" var_name var.value; *)
             (* print_env env; *)
             var :: env
         | Some entry ->
-            Printf.printf "Exist with value: %d\n" entry.value;
-            let var =
-              {
-                name = var_name;
-                value = eval_ast ast env;
-                history = entry.value :: entry.history;
-              }
-            in
-            Printf.printf "Eval Decl_st for %s >>> %d\n" var_name var.value;
+            Printf.printf "%s Exist with value: %d\n" entry.name entry.value;
+            let updated_var = update_variable (eval_ast ast env) entry in
+            print_endline "\nHistory:";
+            print_var_history updated_var 0;
             (* print_env env; *)
-            var :: env
+            let new_env = pop_env_by_var_name env updated_var.name in
+            updated_var :: new_env
       in
       eval tl new_env
   | Expr_st ast :: tl ->
