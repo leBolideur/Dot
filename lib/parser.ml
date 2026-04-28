@@ -1,16 +1,8 @@
 open Lexer
 
-(* type env_entry = { *)
-  (* name : string; *)
-  (* freezed : bool; *)
-  (* value : int; *)
-  (* history : int list; *)
-(* } *)
-
 type ast =
   | Int of int
   | Var of string
-  (*| Freeze of string *)
   | Add of ast * ast
   | Minus of ast * ast
   | Mul of ast * ast
@@ -21,15 +13,13 @@ type program = { statements : statement list }
 
 let rec parse_primary tokens =
   match tokens with
-  | { kind = Int nb } :: tl -> (Int nb, tl)
+  | { kind = INT nb } :: tl -> (Int nb, tl)
   | { kind = LPAREN } :: tl -> (
       let right, rest = parse_add tl in
       match rest with
       | { kind = RPAREN } :: tl' -> (right, tl')
       | _ -> failwith "Missing RPAREN")
-  | { kind = VAR name } :: tl ->
-      (* Printf.printf "parse_primary > VAR name = %s\n" name; *)
-      (Var name, tl)
+  | { kind = VAR name } :: tl -> (Var name, tl)
   | _ -> failwith "Fail parse_primary"
 
 and parse_factor tokens =
@@ -68,7 +58,6 @@ let rec print_ast ast =
   match ast with
   | Int nb -> Printf.printf "%d" nb
   | Var name -> Printf.printf "VAR %s = " name
-  (*| Freeze var_name -> Printf.printf "Freezing %s" var_name *)
   | Add (left, right) ->
       Printf.printf "(";
       print_ast left;
@@ -106,30 +95,25 @@ let rec parse tokens stmts =
   match tokens with
   | [] -> { statements = stmts }
   | { kind = EOF } :: [] ->
-      (* print_endline "\nEnd of parse"; *)
       { statements = stmts }
   | { kind = NEWLINE } :: tl -> parse tl stmts
   | { kind = VAR name } :: { kind = ASSIGN } :: tl -> (
-      (* Printf.printf "DECL VAR, name = %s\n" name; *)
       let node, rest = parse_expression tl in
 
       match rest with
       | { kind = DOT } :: tl ->
           let stmt = Decl_st (name, node, true) in
-          Printf.printf "%s To be freeeeeeze\n" name;
           parse tl (stmt :: stmts)
       | _ ->
           let stmt = Decl_st (name, node, false) in
           parse rest (stmt :: stmts))
   | { kind = VAR name } :: { kind = DOT } :: tl ->
-      Printf.printf "IDENT FREEZE, name = %s\n" name;
       let stmt = Freeze_st (name) in
       parse tl (stmt :: stmts)
   | { kind = VAR name } :: tl ->
-      Printf.printf "IDENT VAR, name = %s\n" name;
       let stmt = Expr_st (Var name) in
       parse tl (stmt :: stmts)
-  | { kind = Int _ } :: _ | { kind = LPAREN } :: _ ->
+  | { kind = INT _ } :: _ | { kind = LPAREN } :: _ ->
       let node, rest = parse_expression tokens in
       let stmt = Expr_st node in
       parse rest (stmt :: stmts)

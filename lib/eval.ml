@@ -22,7 +22,6 @@ let rec eval program_stmts env =
       let new_env =
         match find_in_env env var_name with
         | None ->
-            Printf.printf "%s not existing in env\n" var_name;
             let value = eval_ast ast env in
             let var =
               {
@@ -33,17 +32,10 @@ let rec eval program_stmts env =
               }
             in
             var :: env
-        | Some entry when is_freezed ->
-            Printf.printf "%s Exist with value: %d BUT freezed = %b\n"
-              entry.name entry.value entry.freezed;
-            failwith "Frrrrreeeeezed var error"
+        | Some _ when is_freezed -> failwith "Variable already freezed"
         | Some entry ->
-            Printf.printf "%s Exist with value: %d AND freezed = %b\n"
-              entry.name entry.value entry.freezed;
-
             let updated_var = update_variable (eval_ast ast env) entry in
 
-            print_endline "\nHistory:";
             print_var_history updated_var 0;
 
             let new_env = pop_env_by_var_name env updated_var.name in
@@ -51,7 +43,6 @@ let rec eval program_stmts env =
       in
       eval tl new_env
   | Freeze_st name :: tl ->
-    print_endline "env before Freeze_st";
     print_env env;
     let var_to_freeze = 
       match find_in_env env name with
@@ -60,9 +51,7 @@ let rec eval program_stmts env =
        in
     let new_var = {var_to_freeze with freezed = true} in
     let new_env = pop_env_by_var_name env name in
-    print_endline "env after Freeze_st";
+  
     print_env new_env;
     eval tl (new_var :: new_env)
-  | Expr_st ast :: tl ->
-      Printf.printf "Eval Expr_st >>> %d\n" (eval_ast ast env);
-      eval tl env
+  | Expr_st _ :: tl -> eval tl env

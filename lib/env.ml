@@ -14,9 +14,7 @@ let rec find_in_env env var_name =
 let rec print_env env =
   match env with
   | [] -> print_endline "End of env"
-  | { name = var_name; freezed = var_freezed; value = var_value; history = _ }
-    :: tl ->
-      Printf.printf "VAR %s = %d\tfreezed? %b\n" var_name var_value var_freezed;
+  | { name = _; freezed = _; value = _; history = _ } :: tl ->
       print_env tl
 
   let update_variable ast var =
@@ -33,7 +31,6 @@ let rec print_env env =
           history = new_history;
         }
       in
-      Printf.printf "Update var for %s >>> %d\n" var.name new_var.value;
       new_var
 
 let rec print_var_history var index =

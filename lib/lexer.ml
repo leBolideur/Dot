@@ -1,5 +1,5 @@
 type token_type =
-  | Int of int
+  | INT of int
   | IDENT of string
   | VAR of string
   | STR_LIT of string
@@ -26,7 +26,7 @@ type state = { index : int; line : int }
 
 let print_token token =
   match token.kind with
-  | Int nb -> Printf.printf "INT : %d\n" nb
+  | INT nb -> Printf.printf "INT : %d\n" nb
   | IDENT ident -> Printf.printf "IDENT : %s\n" ident
   | VAR name -> Printf.printf "VAR : %s\n" name
   | STR_LIT str -> Printf.printf "STRING : %s\n" str
@@ -71,8 +71,8 @@ let rec read_int input state start =
   | Some '0' .. '9' -> read_int input (advance state) start
   | Some _ | None ->
       let sub = String.sub input start (state.index - start) in
-      let int = int_of_string sub in
-      (state, int)
+      let number = int_of_string sub in
+      (state, number)
 
 let is_next_char input state expected =
   match peek input (advance state) with Some c -> expected == c | _ -> false
@@ -96,7 +96,7 @@ let rec lex input state tokens =
       lex input state (token :: tokens)
   | Some '0' .. '9' ->
       let state, int = read_int input state state.index in
-      let token = { kind = Int int } in
+      let token = { kind = INT int } in
       lex input state (token :: tokens)
   | Some '"' ->
       (* Consume the quote *)
