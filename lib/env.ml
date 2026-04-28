@@ -1,8 +1,10 @@
+open Parser 
+
 type env_entry = {
   name : string;
   freezed : bool;
-  value : int;
-  history : int list;
+  value : value;
+  history : value list;
 }
 
 let rec find_in_env env var_name =
@@ -37,9 +39,15 @@ let rec print_var_history var index =
   match var.history with
   | [] -> print_endline "No history"
   | _ :: _ when index >= List.length var.history -> print_endline "End history"
-  | _ :: _ ->
-      Printf.printf "%s@%d = %d\n" var.name index (List.nth var.history index);
+  | _ :: _ -> (
+    match (List.nth var.history index) with
+    | VInt number ->
+      Printf.printf "%s@%d = %d\n" var.name index number;
       print_var_history var (index + 1)
+    | VStr str ->
+      Printf.printf "%s@%d = %s\n" var.name index str;
+      print_var_history var (index + 1)
+  )
 
 let rec pop_env_by_var_name env name =
   match env with

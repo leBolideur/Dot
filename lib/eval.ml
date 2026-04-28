@@ -3,14 +3,21 @@ open Env
 
 let rec eval_ast ast env =
   match ast with
-  | Int nb -> nb
+  (* | Int nb -> nb *)
+  | Value value -> (
+    match value with
+    | VInt number -> VInt number
+    | VStr str -> VStr str
+  )
   | Var name -> (
       match find_in_env env name with
       | None ->
           Printf.printf "Unbound variable %s\n" name;
           failwith ""
       | Some entry -> entry.value)
-  | Add (left, right) -> eval_ast left env + eval_ast right env
+  | Add (left, right) -> 
+    match (left, right) with
+    | (VInt a, VInt b) -> VInt (eval_ast a env + eval_ast b env)
   | Minus (left, right) -> eval_ast left env - eval_ast right env
   | Mul (left, right) -> eval_ast left env * eval_ast right env
   | Div (left, right) -> eval_ast left env / eval_ast right env

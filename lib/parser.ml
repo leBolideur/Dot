@@ -1,7 +1,12 @@
 open Lexer
 
+type value = 
+  | VInt of int 
+  | VStr of string
+
 type ast =
-  | Int of int
+  (* | Int of int *)
+  | Value of value
   | Var of string
   | Add of ast * ast
   | Minus of ast * ast
@@ -13,7 +18,9 @@ type program = { statements : statement list }
 
 let rec parse_primary tokens =
   match tokens with
-  | { kind = INT nb } :: tl -> (Int nb, tl)
+  | { kind = INT nb } :: tl -> 
+    let value = Value (VInt nb) in
+    (value, tl)
   | { kind = LPAREN } :: tl -> (
       let right, rest = parse_add tl in
       match rest with
@@ -56,7 +63,13 @@ and parse_add_aux left rest =
 
 let rec print_ast ast =
   match ast with
-  | Int nb -> Printf.printf "%d" nb
+  (* | Int nb -> Printf.printf "%d" nb *)
+  | Value value -> (
+    match value with
+    | VInt number -> 
+      let number_str = string_of_int number in
+      Printf.printf "%s" number_str
+    | VStr str -> Printf.printf "%s" str)
   | Var name -> Printf.printf "VAR %s = " name
   | Add (left, right) ->
       Printf.printf "(";
