@@ -1,15 +1,16 @@
 open Lexer
 
-type env_entry = {
-  name : string;
-  freezed : bool;
-  value : int;
-  history : int list;
-}
+(* type env_entry = { *)
+  (* name : string; *)
+  (* freezed : bool; *)
+  (* value : int; *)
+  (* history : int list; *)
+(* } *)
 
 type ast =
   | Int of int
   | Var of string
+  | Freeze of string
   | Add of ast * ast
   | Minus of ast * ast
   | Mul of ast * ast
@@ -67,6 +68,7 @@ let rec print_ast ast =
   match ast with
   | Int nb -> Printf.printf "%d" nb
   | Var name -> Printf.printf "VAR %s = " name
+  | Freeze var_name -> Printf.printf "Freezing %s" var_name
   | Add (left, right) ->
       Printf.printf "(";
       print_ast left;
@@ -114,13 +116,14 @@ let rec parse tokens stmts =
       match rest with
       | { kind = DOT } :: tl ->
           let stmt = Decl_st (name, node, true) in
+          Printf.printf "%s To be freeeeeeze\n" name;
           parse tl (stmt :: stmts)
       | _ ->
           let stmt = Decl_st (name, node, false) in
           parse rest (stmt :: stmts))
   | { kind = VAR name } :: { kind = DOT } :: tl ->
       Printf.printf "IDENT FREEZE, name = %s\n" name;
-      let stmt = Expr_st (Var name) in
+      let stmt = Expr_st (Freeze name) in
       parse tl (stmt :: stmts)
   | { kind = VAR name } :: tl ->
       Printf.printf "IDENT VAR, name = %s\n" name;

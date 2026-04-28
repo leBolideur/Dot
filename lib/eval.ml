@@ -21,6 +21,14 @@ let rec print_env env =
       Printf.printf "VAR %s = %d\tfreezed? %b\n" var_name var_value var_freezed;
       print_env tl
 
+let rec freeze_by_name env name =
+  match env with
+  | [] -> env
+  | entry :: _ when entry.name == name ->
+      let freezed_var = { entry with freezed = true } in
+      freezed_var :: env
+  | _ -> freeze_by_name env name
+
 let rec eval_ast ast env =
   match ast with
   | Int nb -> nb
@@ -69,32 +77,40 @@ let rec pop_env_by_var_name env name =
 let rec eval program_stmts env =
   match program_stmts with
   | [] -> env
-  | Decl_st (var_name, ast, freezed) :: tl ->
+  | Decl_st (var_name, ast, is_freezed) :: tl ->
       let new_env =
         match find_in_env var_name env with
         | None ->
             Printf.printf "%s not existing in env\n" var_name;
             let value = eval_ast ast env in
             let var =
-              { name = var_name; freezed = false; value; history = value :: [] }
+              {
+                name = var_name;
+                freezed = is_freezed;
+                value;
+                history = value :: [];
+              }
             in
-            (* Printf.printf "Eval Decl_st for %s >>> %d\n" var_name var.value; *)
-            (* print_env env; *)
             var :: env
-        | Some entry when freezed ->
+        | Some entry when is_freezed ->
             Printf.printf "%s Exist with value: %d BUT freezed = %b\n"
               entry.name entry.value entry.freezed;
-            failwith "Frrrrreeeeezed"
+            failwith "Frrrrreeeeezed var error"
         | Some entry ->
             Printf.printf "%s Exist with value: %d AND freezed = %b\n"
               entry.name entry.value entry.freezed;
+
             let updated_var = update_variable (eval_ast ast env) entry in
+
             print_endline "\nHistory:";
             print_var_history updated_var 0;
-            (* print_env env; *)
+
             let new_env = pop_env_by_var_name env updated_var.name in
             updated_var :: new_env
       in
+      eval tl new_env
+  | Expr_st (Freeze name) :: tl ->
+      let new_env = freeze_by_name env name in
       eval tl new_env
   | Expr_st ast :: tl ->
       Printf.printf "Eval Expr_st >>> %d\n" (eval_ast ast env);
