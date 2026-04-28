@@ -10,13 +10,13 @@ open Lexer
 type ast =
   | Int of int
   | Var of string
-  | Freeze of string
+  (*| Freeze of string *)
   | Add of ast * ast
   | Minus of ast * ast
   | Mul of ast * ast
   | Div of ast * ast
 
-type statement = Decl_st of string * ast * bool | Expr_st of ast
+type statement = Decl_st of string * ast * bool | Expr_st of ast | Freeze_st of string
 type program = { statements : statement list }
 
 let rec parse_primary tokens =
@@ -68,7 +68,7 @@ let rec print_ast ast =
   match ast with
   | Int nb -> Printf.printf "%d" nb
   | Var name -> Printf.printf "VAR %s = " name
-  | Freeze var_name -> Printf.printf "Freezing %s" var_name
+  (*| Freeze var_name -> Printf.printf "Freezing %s" var_name *)
   | Add (left, right) ->
       Printf.printf "(";
       print_ast left;
@@ -123,7 +123,7 @@ let rec parse tokens stmts =
           parse rest (stmt :: stmts))
   | { kind = VAR name } :: { kind = DOT } :: tl ->
       Printf.printf "IDENT FREEZE, name = %s\n" name;
-      let stmt = Expr_st (Freeze name) in
+      let stmt = Freeze_st (name) in
       parse tl (stmt :: stmts)
   | { kind = VAR name } :: tl ->
       Printf.printf "IDENT VAR, name = %s\n" name;

@@ -1,6 +1,7 @@
 open Dot.Lexer
 open Dot.Parser
 open Dot.Eval
+open Dot.Env
 
 let () =
   (* let input = *)
@@ -19,7 +20,7 @@ let () =
    Total = 666 Total = 7736 Test = Y\n
    Y\n
    Test.\n
-   Test = 777\n
+   
    Freeze = 4." in
   let var_tokens = Dot.Lexer.lex input state [] in
   (* List.iter Dot.Lexer.print_token (List.rev var_tokens); *)
