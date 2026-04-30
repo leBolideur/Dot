@@ -70,7 +70,7 @@ let rec eval program_stmts env =
       let var_to_freeze =
         match find_in_env env name with
         | Some entry -> entry
-        | None -> failwith "Unable to freeze this var"
+        | None -> failwith ("Unable to freeze this var: " ^ name)
       in
       let new_var = { var_to_freeze with freezed = true } in
       let new_env = pop_env_by_var_name env name in

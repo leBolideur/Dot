@@ -104,21 +104,28 @@ let parse_var_st name tokens =
   let _, rest = parse_expression tokens in
   (Var name, rest)
 
+let check_freeze tokens = 
+  match tokens with
+    | { kind = DOT } :: tl -> (true, tl)
+    | { kind = NEWLINE } :: tl -> (false, tl)
+    | _ -> failwith "Expected . or newline"
+
 let rec parse tokens stmts =
   match tokens with
   | [] -> { statements = stmts }
   | { kind = EOF } :: [] -> { statements = stmts }
   | { kind = NEWLINE } :: tl -> parse tl stmts
-  | { kind = VAR name } :: { kind = ASSIGN } :: tl -> (
+  | { kind = VAR name } :: { kind = ASSIGN } :: { kind = STR_LIT s } :: tl ->
+    let node = StrLit s in
+    let to_freeze, rest = check_freeze tl in
+    let stmt = Decl_st (name, node, to_freeze) in
+    parse rest (stmt :: stmts)
+  | { kind = VAR name } :: { kind = ASSIGN } :: tl -> 
       let node, rest = parse_expression tl in
 
-      match rest with
-      | { kind = DOT } :: tl ->
-          let stmt = Decl_st (name, node, true) in
-          parse tl (stmt :: stmts)
-      | _ ->
-          let stmt = Decl_st (name, node, false) in
-          parse rest (stmt :: stmts))
+      let to_freeze, rest' = check_freeze rest in
+      let stmt = Decl_st (name, node,  to_freeze) in
+      parse rest' (stmt :: stmts)
   | { kind = VAR name } :: { kind = DOT } :: tl ->
       let stmt = Freeze_st name in
       parse tl (stmt :: stmts)
