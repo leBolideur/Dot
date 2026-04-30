@@ -66,7 +66,6 @@ let rec eval program_stmts env =
       in
       eval tl new_env
   | Freeze_st name :: tl ->
-      print_env env;
       let var_to_freeze =
         match find_in_env env name with
         | Some entry -> entry
@@ -75,6 +74,5 @@ let rec eval program_stmts env =
       let new_var = { var_to_freeze with freezed = true } in
       let new_env = pop_env_by_var_name env name in
 
-      print_env new_env;
       eval tl (new_var :: new_env)
   | Expr_st _ :: tl -> eval tl env

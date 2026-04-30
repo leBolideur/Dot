@@ -9,13 +9,12 @@ let () =
   let input = "Y = 7 * 7\n
   Test = 2 + 2*3+2\n
   Total = Y + Test + 1\n
-   2+2\n
+   
    Total = 666
    Total = 7736
-    Test = Y\n
+
    Y.\n
-   Test\n
-   Test = \"Hello\".
+   Str = \"Hello\".
    
    Freeze = 4." in
   let var_tokens = Dot.Lexer.lex input state [] in

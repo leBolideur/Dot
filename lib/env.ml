@@ -16,10 +16,18 @@ let rec find_in_env env var_name =
 let rec print_env env =
   match env with
   | [] -> print_endline "End of env"
-  | { name = _; freezed = _; value = _; history = _ } :: tl ->
-      print_env tl
+  | { name = name; freezed = freezed; value = value; history = _ } :: tl ->
+      (match value with
+        | VInt nb -> 
+          Printf.printf "VInt - %s = %d is freezed? %b\n" name nb freezed;
+          print_env tl
+        | VStr str ->
+          Printf.printf "VStr - %s = %s is freezed? %b\n" name str freezed;
+          print_env tl
+      )
+      
 
-  let update_variable ast var =
+let update_variable ast var =
   match var.freezed with
   | true -> failwith "Freezed variable!"
   | false ->
