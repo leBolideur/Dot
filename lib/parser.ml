@@ -1,26 +1,28 @@
 open Lexer
 
-type value = 
-  | VInt of int 
-  | VStr of string
+type value = VInt of int | VStr of string
 
 type ast =
-  (* | Int of int *)
-  | Value of value
+  | IntLit of int
+  | StrLit of string
   | Var of string
   | Add of ast * ast
   | Minus of ast * ast
   | Mul of ast * ast
   | Div of ast * ast
 
-type statement = Decl_st of string * ast * bool | Expr_st of ast | Freeze_st of string
+type statement =
+  | Decl_st of string * ast * bool
+  | Expr_st of ast
+  | Freeze_st of string
+
 type program = { statements : statement list }
 
 let rec parse_primary tokens =
   match tokens with
-  | { kind = INT nb } :: tl -> 
-    let value = Value (VInt nb) in
-    (value, tl)
+  | { kind = INT nb } :: tl ->
+      let value = IntLit nb in
+      (value, tl)
   | { kind = LPAREN } :: tl -> (
       let right, rest = parse_add tl in
       match rest with
@@ -64,12 +66,10 @@ and parse_add_aux left rest =
 let rec print_ast ast =
   match ast with
   (* | Int nb -> Printf.printf "%d" nb *)
-  | Value value -> (
-    match value with
-    | VInt number -> 
+  | IntLit number ->
       let number_str = string_of_int number in
       Printf.printf "%s" number_str
-    | VStr str -> Printf.printf "%s" str)
+  | StrLit str -> Printf.printf "%s" str
   | Var name -> Printf.printf "VAR %s = " name
   | Add (left, right) ->
       Printf.printf "(";
@@ -107,8 +107,7 @@ let parse_var_st name tokens =
 let rec parse tokens stmts =
   match tokens with
   | [] -> { statements = stmts }
-  | { kind = EOF } :: [] ->
-      { statements = stmts }
+  | { kind = EOF } :: [] -> { statements = stmts }
   | { kind = NEWLINE } :: tl -> parse tl stmts
   | { kind = VAR name } :: { kind = ASSIGN } :: tl -> (
       let node, rest = parse_expression tl in
@@ -121,7 +120,7 @@ let rec parse tokens stmts =
           let stmt = Decl_st (name, node, false) in
           parse rest (stmt :: stmts))
   | { kind = VAR name } :: { kind = DOT } :: tl ->
-      let stmt = Freeze_st (name) in
+      let stmt = Freeze_st name in
       parse tl (stmt :: stmts)
   | { kind = VAR name } :: tl ->
       let stmt = Expr_st (Var name) in
