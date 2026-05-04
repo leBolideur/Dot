@@ -17,6 +17,8 @@ let () =
 
    Y.\n
    Str = \"Hello\".
+   .print Str
+   .print \"World!\"
    
    Freeze = 4." in
   let tokens = Dot.Lexer.lex input state [] in
@@ -24,7 +26,7 @@ let () =
 
   let {statements = stmts} = Dot.Parser.parse (List.rev tokens) [] in
    
-  let env = eval (List.rev stmts) [] in
+  let env = run (List.rev stmts) [] in
   print_env env;
 
   print_endline "so far, so good!"

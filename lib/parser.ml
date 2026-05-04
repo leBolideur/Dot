@@ -5,7 +5,6 @@ type value = VInt of int | VStr of string | VUnit
 type ast =
   | IntLit of int
   | StrLit of string
-  | Builtin of string * ast
   | Var of string
   | Add of ast * ast
   | Minus of ast * ast
@@ -16,6 +15,7 @@ type statement =
   | Decl_st of string * ast * bool (* bool = to_freeze *)
   | Expr_st of ast
   | Freeze_st of string
+  | Builtin_st of string * ast
 
 type program = { statements : statement list }
 
@@ -23,6 +23,9 @@ let rec parse_primary tokens =
   match tokens with
   | { kind = INT nb } :: tl ->
       let value = IntLit nb in
+      (value, tl)
+  | { kind = STR_LIT str } :: tl ->
+      let value = StrLit str in
       (value, tl)
   | { kind = LPAREN } :: tl -> (
       let right, rest = parse_add tl in
@@ -72,7 +75,6 @@ let rec print_ast ast =
       Printf.printf "%s" number_str
   | StrLit str -> Printf.printf "%s" str
   | Var name -> Printf.printf "Var %s = " name
-  | Builtin (name, _) -> Printf.printf "Builtin %s" name
   | Add (left, right) ->
       Printf.printf "(";
       print_ast left;
@@ -118,9 +120,8 @@ let rec parse tokens stmts =
   | { kind = EOF } :: _ -> { statements = stmts }
   | { kind = NEWLINE } :: tl -> parse tl stmts
   | { kind = DOT } :: { kind = BUILTIN name } :: tl ->
-      (* Printf.printf "BUITINS ??\n"; *)
       let node, rest = parse_expression tl in
-      let stmt = Expr_st (Builtin (name, node)) in
+      let stmt = Builtin_st (name, node) in
       parse rest (stmt :: stmts)
   | { kind = VAR name } :: { kind = ASSIGN } :: { kind = STR_LIT s } :: tl ->
       let node = StrLit s in

@@ -11,12 +11,6 @@ let rec eval_ast ast env =
           Printf.printf "Unbound variable %s\n" name;
           failwith ""
       | Some entry -> entry.value)
-  | Builtin (name, _) -> (
-        match name with
-        | "print" -> Printf.printf "BI Print\n"; VUnit
-        | "debug" -> Printf.printf "BI Debug\n"; VUnit
-        | _ -> failwith "Unknows builtin"
-      )
   | Add (left, right) -> (
       let x = eval_ast left env in
       let y = eval_ast right env in
@@ -42,7 +36,7 @@ let rec eval_ast ast env =
       | VInt a, VInt b -> VInt (a / b)
       | _ -> failwith "Type mismatch for operator /")
 
-let rec eval program_stmts env =
+let rec run program_stmts env =
   match program_stmts with
   | [] -> env
   | Decl_st (var_name, ast, is_freezed) :: tl ->
@@ -68,7 +62,7 @@ let rec eval program_stmts env =
             let new_env = pop_env_by_var_name env updated_var.name in
             updated_var :: new_env
       in
-      eval tl new_env
+      run tl new_env
   | Freeze_st name :: tl ->
       let var_to_freeze =
         match find_in_env env name with
@@ -78,5 +72,12 @@ let rec eval program_stmts env =
       let new_var = { var_to_freeze with freezed = true } in
       let new_env = pop_env_by_var_name env name in
 
-      eval tl (new_var :: new_env)
-  | Expr_st _ :: tl -> eval tl env
+      run tl (new_var :: new_env)
+  | Builtin_st (name, ast) :: tl -> 
+    let node = eval_ast ast env in
+      (match name, node with
+      | "print", VInt nb -> Printf.printf "BI Print VInt: %d\n" nb; run tl env
+      | "print", VStr str -> Printf.printf "BI Print VStr: %s\n" str; run tl env
+      | "debug", VInt _ -> Printf.printf "BI Debug\n"; run tl env
+      | _ -> failwith "Unknown builtin" )
+  | Expr_st _ :: tl -> run tl env
