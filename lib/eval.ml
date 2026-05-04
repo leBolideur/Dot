@@ -1,8 +1,6 @@
 open Parser
 open Env
 
-(* type value = VInt of int | VStr of string *)
-
 let rec eval_ast ast env =
   match ast with
   | IntLit nb -> VInt nb
@@ -13,10 +11,10 @@ let rec eval_ast ast env =
           Printf.printf "Unbound variable %s\n" name;
           failwith ""
       | Some entry -> entry.value)
-  | Builtin name -> (
+  | Builtin (name, _) -> (
         match name with
-        | "print" -> Printf.printf "BI Print\n"
-        | "debug" -> Printf.printf "BI Debug\n"
+        | "print" -> Printf.printf "BI Print\n"; VUnit
+        | "debug" -> Printf.printf "BI Debug\n"; VUnit
         | _ -> failwith "Unknows builtin"
       )
   | Add (left, right) -> (

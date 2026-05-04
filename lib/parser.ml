@@ -1,6 +1,6 @@
 open Lexer
 
-type value = VInt of int | VStr of string
+type value = VInt of int | VStr of string | VUnit 
 
 type ast =
   | IntLit of int
@@ -120,7 +120,7 @@ let rec parse tokens stmts =
   | { kind = DOT } :: { kind = BUILTIN name } :: tl ->
       (* Printf.printf "BUITINS ??\n"; *)
       let node, rest = parse_expression tl in
-      let stmt = Expr_st (Builtin name node) in
+      let stmt = Expr_st (Builtin (name, node)) in
       parse rest (stmt :: stmts)
   | { kind = VAR name } :: { kind = ASSIGN } :: { kind = STR_LIT s } :: tl ->
       let node = StrLit s in

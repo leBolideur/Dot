@@ -24,6 +24,7 @@ let rec print_env env =
         | VStr str ->
           Printf.printf "VStr - %s = %s is freezed? %b\n" name str freezed;
           print_env tl
+        | _ -> print_env tl
       )
       
 
@@ -55,6 +56,7 @@ let rec print_var_history var index =
     | VStr str ->
       Printf.printf "%s@%d = %s\n" var.name index str;
       print_var_history var (index + 1)
+    | _ -> print_var_history var (index + 1)
   )
 
 let rec pop_env_by_var_name env name =

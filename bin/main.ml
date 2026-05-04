@@ -12,16 +12,18 @@ let () =
    
    Total = 666
    Total = 7736
-    .print Total
+   .print Total
+   .debug Test
 
    Y.\n
    Str = \"Hello\".
    
    Freeze = 4." in
-  let var_tokens = Dot.Lexer.lex input state [] in
+  let tokens = Dot.Lexer.lex input state [] in
+  (* List.iter print_token (List.rev tokens); *)
 
-  let {statements = stmts} = Dot.Parser.parse (List.rev var_tokens) [] in
- 
+  let {statements = stmts} = Dot.Parser.parse (List.rev tokens) [] in
+   
   let env = eval (List.rev stmts) [] in
   print_env env;
 
