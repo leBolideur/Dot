@@ -3,6 +3,7 @@ type token_type =
   | IDENT of string
   | VAR of string
   | STR_LIT of string
+  | BUILTIN of string
   | DOT
   | EOF
   | ASSIGN
@@ -30,6 +31,7 @@ let print_token token =
   | IDENT ident -> Printf.printf "IDENT : %s\n" ident
   | VAR name -> Printf.printf "VAR : %s\n" name
   | STR_LIT str -> Printf.printf "STRING : %s\n" str
+  | BUILTIN name  -> Printf.printf "BUILTIN : %s\n" name
   | DOT -> print_endline "DOT ."
   | ASSIGN -> print_endline "ASSIGN"
   | EQ -> print_endline "EQ"
@@ -81,15 +83,22 @@ let rec lex input state tokens =
   match peek input state with
   | Some ' ' -> lex input (advance state) tokens
   | Some '\n' ->
-    let token = { kind = NEWLINE} in
-      lex input { index = state.index + 1; line = state.line + 1 } (token :: tokens)
+      let token = { kind = NEWLINE } in
+      lex input
+        { index = state.index + 1; line = state.line + 1 }
+        (token :: tokens)
   | Some '.' ->
       let token = { kind = DOT } in
       lex input (advance state) (token :: tokens)
-  | Some 'a' .. 'z' ->
+  | Some 'a' .. 'z' -> (
       let state, result = read_ident input state state.index in
-      let token = { kind = IDENT result } in
-      lex input state (token :: tokens)
+      match result with
+      | "print" | "debug" ->
+          let token = { kind = BUILTIN result} in
+          lex input state (token :: tokens)
+      | _ ->
+          let token = { kind = IDENT result } in
+          lex input state (token :: tokens))
   | Some 'A' .. 'Z' ->
       let state, result = read_ident input state state.index in
       let token = { kind = VAR result } in

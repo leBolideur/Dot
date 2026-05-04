@@ -12,6 +12,7 @@ let () =
    
    Total = 666
    Total = 7736
+    .print Total
 
    Y.\n
    Str = \"Hello\".

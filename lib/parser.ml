@@ -5,6 +5,7 @@ type value = VInt of int | VStr of string
 type ast =
   | IntLit of int
   | StrLit of string
+  | Builtin of string * ast
   | Var of string
   | Add of ast * ast
   | Minus of ast * ast
@@ -12,7 +13,7 @@ type ast =
   | Div of ast * ast
 
 type statement =
-  | Decl_st of string * ast * bool
+  | Decl_st of string * ast * bool (* bool = to_freeze *)
   | Expr_st of ast
   | Freeze_st of string
 
@@ -70,7 +71,8 @@ let rec print_ast ast =
       let number_str = string_of_int number in
       Printf.printf "%s" number_str
   | StrLit str -> Printf.printf "%s" str
-  | Var name -> Printf.printf "VAR %s = " name
+  | Var name -> Printf.printf "Var %s = " name
+  | Builtin (name, _) -> Printf.printf "Builtin %s" name
   | Add (left, right) ->
       Printf.printf "(";
       print_ast left;
@@ -104,27 +106,32 @@ let parse_var_st name tokens =
   let _, rest = parse_expression tokens in
   (Var name, rest)
 
-let check_freeze tokens = 
+let check_freeze tokens =
   match tokens with
-    | { kind = DOT } :: tl -> (true, tl)
-    | { kind = NEWLINE } :: tl -> (false, tl)
-    | _ -> failwith "Expected . or newline"
+  | { kind = DOT } :: tl -> (true, tl)
+  | { kind = NEWLINE } :: tl -> (false, tl)
+  | _ -> failwith "Expected . or newline"
 
 let rec parse tokens stmts =
   match tokens with
   | [] -> { statements = stmts }
-  | { kind = EOF } :: [] -> { statements = stmts }
+  | { kind = EOF } :: _ -> { statements = stmts }
   | { kind = NEWLINE } :: tl -> parse tl stmts
+  | { kind = DOT } :: { kind = BUILTIN name } :: tl ->
+      (* Printf.printf "BUITINS ??\n"; *)
+      let node, rest = parse_expression tl in
+      let stmt = Expr_st (Builtin name node) in
+      parse rest (stmt :: stmts)
   | { kind = VAR name } :: { kind = ASSIGN } :: { kind = STR_LIT s } :: tl ->
-    let node = StrLit s in
-    let to_freeze, rest = check_freeze tl in
-    let stmt = Decl_st (name, node, to_freeze) in
-    parse rest (stmt :: stmts)
-  | { kind = VAR name } :: { kind = ASSIGN } :: tl -> 
+      let node = StrLit s in
+      let to_freeze, rest = check_freeze tl in
+      let stmt = Decl_st (name, node, to_freeze) in
+      parse rest (stmt :: stmts)
+  | { kind = VAR name } :: { kind = ASSIGN } :: tl ->
       let node, rest = parse_expression tl in
 
       let to_freeze, rest' = check_freeze rest in
-      let stmt = Decl_st (name, node,  to_freeze) in
+      let stmt = Decl_st (name, node, to_freeze) in
       parse rest' (stmt :: stmts)
   | { kind = VAR name } :: { kind = DOT } :: tl ->
       let stmt = Freeze_st name in

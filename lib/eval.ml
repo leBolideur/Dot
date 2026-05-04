@@ -13,6 +13,12 @@ let rec eval_ast ast env =
           Printf.printf "Unbound variable %s\n" name;
           failwith ""
       | Some entry -> entry.value)
+  | Builtin name -> (
+        match name with
+        | "print" -> Printf.printf "BI Print\n"
+        | "debug" -> Printf.printf "BI Debug\n"
+        | _ -> failwith "Unknows builtin"
+      )
   | Add (left, right) -> (
       let x = eval_ast left env in
       let y = eval_ast right env in
