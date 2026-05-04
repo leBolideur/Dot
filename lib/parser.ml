@@ -1,10 +1,11 @@
 open Lexer
 
-type value = VInt of int | VStr of string | VUnit 
+type value = VInt of int | VStr of string | VIdent of string | VUnit 
 
 type ast =
   | IntLit of int
   | StrLit of string
+  | Ident of string
   | Var of string
   | Add of ast * ast
   | Minus of ast * ast
@@ -26,6 +27,9 @@ let rec parse_primary tokens =
       (value, tl)
   | { kind = STR_LIT str } :: tl ->
       let value = StrLit str in
+      (value, tl)
+  | { kind = IDENT name } :: tl ->
+      let value = Ident name in
       (value, tl)
   | { kind = LPAREN } :: tl -> (
       let right, rest = parse_add tl in
@@ -74,6 +78,7 @@ let rec print_ast ast =
       let number_str = string_of_int number in
       Printf.printf "%s" number_str
   | StrLit str -> Printf.printf "%s" str
+  | Ident name -> Printf.printf "ident: %s" name
   | Var name -> Printf.printf "Var %s = " name
   | Add (left, right) ->
       Printf.printf "(";
