@@ -13,13 +13,12 @@ let () =
    Total = 666
    Total = 7736
    .print Total
-   .debug Test
+   
 
-   Y.\n
    Str = \"Hello\".
    .print Str
    .print \"World!\"
-   
+   .debug Test
    Freeze = 4." in
   let tokens = Dot.Lexer.lex input state [] in
   (* List.iter print_token (List.rev tokens); *)

@@ -16,27 +16,22 @@ type statement =
   | Decl_st of string * ast * bool (* bool = to_freeze *)
   | Expr_st of ast
   | Freeze_st of string
-  | Builtin_st of string * ast
+  | Expr_Builtin_st of string * ast
+  | Stmt_Builtin_st of string * string
 
 type program = { statements : statement list }
 
 let rec parse_primary tokens =
   match tokens with
-  | { kind = INT nb } :: tl ->
-      let value = IntLit nb in
-      (value, tl)
-  | { kind = STR_LIT str } :: tl ->
-      let value = StrLit str in
-      (value, tl)
-  | { kind = IDENT name } :: tl ->
-      let value = Ident name in
-      (value, tl)
+  | { kind = INT nb } :: tl -> (IntLit nb, tl)
+  | { kind = STR_LIT str } :: tl -> (StrLit str, tl)
+  | { kind = IDENT name } :: tl -> (Ident name, tl)
+  | { kind = VAR name } :: tl -> (Var name, tl)
   | { kind = LPAREN } :: tl -> (
       let right, rest = parse_add tl in
       match rest with
       | { kind = RPAREN } :: tl' -> (right, tl')
       | _ -> failwith "Missing RPAREN")
-  | { kind = VAR name } :: tl -> (Var name, tl)
   | _ -> failwith "Fail parse_primary"
 
 and parse_factor tokens =
@@ -124,18 +119,20 @@ let rec parse tokens stmts =
   | [] -> { statements = stmts }
   | { kind = EOF } :: _ -> { statements = stmts }
   | { kind = NEWLINE } :: tl -> parse tl stmts
-  | { kind = DOT } :: { kind = BUILTIN name } :: tl ->
+  | { kind = DOT } :: { kind = EXPR_BUILTIN name } :: tl ->
       let node, rest = parse_expression tl in
-      let stmt = Builtin_st (name, node) in
+      let stmt = Expr_Builtin_st (name, node) in
       parse rest (stmt :: stmts)
-  | { kind = VAR name } :: { kind = ASSIGN } :: { kind = STR_LIT s } :: tl ->
+  | { kind = DOT } :: { kind = STMT_BUILTIN name } :: { kind = IDENT ident } :: tl ->
+      let stmt = Stmt_Builtin_st (name, ident) in
+      parse tl (stmt :: stmts)
+  (*| { kind = VAR name } :: { kind = ASSIGN } :: { kind = STR_LIT s } :: tl ->
       let node = StrLit s in
       let to_freeze, rest = check_freeze tl in
       let stmt = Decl_st (name, node, to_freeze) in
-      parse rest (stmt :: stmts)
+      parse rest (stmt :: stmts) *)
   | { kind = VAR name } :: { kind = ASSIGN } :: tl ->
       let node, rest = parse_expression tl in
-
       let to_freeze, rest' = check_freeze rest in
       let stmt = Decl_st (name, node, to_freeze) in
       parse rest' (stmt :: stmts)
@@ -143,12 +140,12 @@ let rec parse tokens stmts =
       let stmt = Freeze_st name in
       parse tl (stmt :: stmts)
   | { kind = VAR name } :: tl ->
-      let stmt = Expr_st (Var name) in
+      let stmt = Expr_st (Ident name) in
       parse tl (stmt :: stmts)
   | { kind = INT _ } :: _ | { kind = LPAREN } :: _ ->
       let node, rest = parse_expression tokens in
       let stmt = Expr_st node in
       parse rest (stmt :: stmts)
-  | _ :: tl ->
-      print_endline "Unknown";
+  | token :: tl ->
+      Printf.printf "Unknown token "; print_token token;
       parse tl stmts
