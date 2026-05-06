@@ -1,4 +1,4 @@
-open Parser 
+open Parser
 
 type env_entry = {
   name : string;
@@ -11,22 +11,20 @@ let rec find_in_env env var_name =
   match env with
   | [] -> None
   | entry :: _ when entry.name = var_name -> Some entry
-  | _ :: tl -> find_in_env tl var_name 
+  | _ :: tl -> find_in_env tl var_name
 
 let rec print_env env =
   match env with
   | [] -> print_endline "End of env"
-  | { name = name; freezed = freezed; value = value; history = _ } :: tl ->
-      (match value with
-        | VInt nb -> 
+  | { name; freezed; value; history = _ } :: tl -> (
+      match value with
+      | VInt nb ->
           Printf.printf "VInt - %s = %d is freezed? %b\n" name nb freezed;
           print_env tl
-        | VStr str ->
+      | VStr str ->
           Printf.printf "VStr - %s = %s is freezed? %b\n" name str freezed;
           print_env tl
-        | _ -> print_env tl
-      )
-      
+      | _ -> print_env tl)
 
 let update_variable ast var =
   match var.freezed with
@@ -49,15 +47,14 @@ let rec print_var_history var index =
   | [] -> print_endline "No history"
   | _ :: _ when index >= List.length var.history -> print_endline "End history"
   | _ :: _ -> (
-    match (List.nth var.history index) with
-    | VInt number ->
-      Printf.printf "%s@%d = %d\n" var.name index number;
-      print_var_history var (index + 1)
-    | VStr str ->
-      Printf.printf "%s@%d = %s\n" var.name index str;
-      print_var_history var (index + 1)
-    | _ -> print_var_history var (index + 1)
-  )
+      match List.nth var.history index with
+      | VInt number ->
+          Printf.printf "%s@%d = %d\n" var.name index number;
+          print_var_history var (index + 1)
+      | VStr str ->
+          Printf.printf "%s@%d = %s\n" var.name index str;
+          print_var_history var (index + 1)
+      | _ -> print_var_history var (index + 1))
 
 let rec pop_env_by_var_name env name =
   match env with

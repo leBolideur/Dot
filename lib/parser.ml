@@ -1,6 +1,6 @@
 open Lexer
 
-type value = VInt of int | VStr of string | VIdent of string | VUnit 
+type value = VInt of int | VStr of string | VIdent of string | VUnit
 
 type ast =
   | IntLit of int
@@ -123,7 +123,10 @@ let rec parse tokens stmts =
       let node, rest = parse_expression tl in
       let stmt = Expr_Builtin_st (name, node) in
       parse rest (stmt :: stmts)
-  | { kind = DOT } :: { kind = STMT_BUILTIN name } :: { kind = IDENT ident } :: tl ->
+  | { kind = DOT }
+    :: { kind = STMT_BUILTIN name }
+    :: { kind = IDENT ident }
+    :: tl ->
       let stmt = Stmt_Builtin_st (name, ident) in
       parse tl (stmt :: stmts)
   (*| { kind = VAR name } :: { kind = ASSIGN } :: { kind = STR_LIT s } :: tl ->
@@ -147,5 +150,6 @@ let rec parse tokens stmts =
       let stmt = Expr_st node in
       parse rest (stmt :: stmts)
   | token :: tl ->
-      Printf.printf "Unknown token "; print_token token;
+      Printf.printf "Unknown token ";
+      print_token token;
       parse tl stmts

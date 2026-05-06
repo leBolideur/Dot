@@ -32,8 +32,8 @@ let print_token token =
   | IDENT ident -> Printf.printf "IDENT : %s\n" ident
   | VAR name -> Printf.printf "VAR : %s\n" name
   | STR_LIT str -> Printf.printf "STRING : %s\n" str
-  | EXPR_BUILTIN name  -> Printf.printf "EXPR_BUILTIN : %s\n" name
-  | STMT_BUILTIN name  -> Printf.printf "STMT_BUILTIN : %s\n" name
+  | EXPR_BUILTIN name -> Printf.printf "EXPR_BUILTIN : %s\n" name
+  | STMT_BUILTIN name -> Printf.printf "STMT_BUILTIN : %s\n" name
   | DOT -> print_endline "DOT ."
   | ASSIGN -> print_endline "ASSIGN"
   | EQ -> print_endline "EQ"
@@ -95,11 +95,11 @@ let rec lex input state tokens =
   | Some 'a' .. 'z' -> (
       let state, result = read_ident input state state.index in
       match result with
-      | "print" -> 
-          let token = { kind = EXPR_BUILTIN result} in
+      | "print" ->
+          let token = { kind = EXPR_BUILTIN result } in
           lex input state (token :: tokens)
       | "debug" ->
-          let token = { kind = STMT_BUILTIN result} in
+          let token = { kind = STMT_BUILTIN result } in
           lex input state (token :: tokens)
       | _ ->
           let token = { kind = IDENT result } in

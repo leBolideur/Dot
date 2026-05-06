@@ -1,19 +1,19 @@
 open Parser
 open Env
 
-let rec var_history_by_name env name = 
-    match env with
-    | [] -> None
-    | hd :: _ when hd.name == name -> Some hd.history
-    | _ :: tl -> var_history_by_name tl name
+let rec var_history_by_name env name =
+  match env with
+  | [] -> None
+  | hd :: _ when hd.name == name -> Some hd.history
+  | _ :: tl -> var_history_by_name tl name
 
 let rec eval_ast ast env =
   match ast with
   | IntLit nb -> VInt nb
   | StrLit str -> VStr str
-  | Ident name -> 
-    Printf.printf "IIIIIIII VIdent for %s\n" name;
-    VIdent name
+  | Ident name ->
+      Printf.printf "IIIIIIII VIdent for %s\n" name;
+      VIdent name
   | Var name -> (
       match find_in_env env name with
       | None ->
@@ -82,22 +82,28 @@ let rec run program_stmts env =
       let new_env = pop_env_by_var_name env name in
 
       run tl (new_var :: new_env)
-  | Expr_Builtin_st (name, ast) :: tl -> 
-    let node = eval_ast ast env in
-      (match name, node with
-      | "print", VInt nb -> Printf.printf "%d\n" nb; run tl env
-      | "print", VStr str -> Printf.printf "%s\n" str; run tl env
-      | _ -> failwith "Unknown builtin" )
-  | Stmt_Builtin_st (name, ident) :: tl -> 
-      (match name, ident with
+  | Expr_Builtin_st (name, ast) :: tl -> (
+      let node = eval_ast ast env in
+      match (name, node) with
+      | "print", VInt nb ->
+          Printf.printf "%d\n" nb;
+          run tl env
+      | "print", VStr str ->
+          Printf.printf "%s\n" str;
+          run tl env
+      | _ -> failwith "Unknown builtin")
+  | Stmt_Builtin_st (name, ident) :: tl -> (
+      match (name, ident) with
       | "debug", var_name -> (
-        let history = var_history_by_name env var_name in 
-        match history with
-        | None -> Printf.printf ".debug > no history for %s\n" var_name; run tl env
-        | Some hist ->
-            Printf.printf "BI Debug history len: %d\n" (List.length hist);
-            run tl env)
+          let history = var_history_by_name env var_name in
+          match history with
+          | None ->
+              Printf.printf ".debug > no history for %s\n" var_name;
+              run tl env
+          | Some hist ->
+              Printf.printf "BI Debug history len: %d\n" (List.length hist);
+              run tl env)
       (* | "debug", _ ->
         failwith ".debug is not available for this type or expression" *)
-      | _ -> failwith "Unknown builtin" )
+      | _ -> failwith "Unknown builtin")
   | Expr_st _ :: tl -> run tl env
