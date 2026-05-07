@@ -66,7 +66,7 @@ let rec run program_stmts env =
         | Some entry ->
             let updated_var = update_variable (eval_ast ast env) entry in
 
-            print_var_history updated_var 0;
+            (* print_var_history updated_var 0; *)
 
             let new_env = pop_env_by_var_name env updated_var.name in
             updated_var :: new_env

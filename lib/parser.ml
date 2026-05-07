@@ -125,7 +125,7 @@ let rec parse tokens stmts =
       parse rest (stmt :: stmts)
   | { kind = DOT }
     :: { kind = STMT_BUILTIN name }
-    :: { kind = IDENT ident }
+    :: { kind = VAR ident }
     :: tl ->
       let stmt = Stmt_Builtin_st (name, ident) in
       parse tl (stmt :: stmts)
