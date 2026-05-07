@@ -98,6 +98,8 @@ let rec run program_stmts env =
           let history = var_history_by_name env var_name in
           match history with
           | None ->
+            Printf.printf "var_name = %s -- len = \n" var_name;
+            print_env env;
               Printf.printf ".debug > no history for %s\n" var_name;
               run tl env
           | Some hist ->
