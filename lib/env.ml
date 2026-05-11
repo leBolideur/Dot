@@ -31,7 +31,7 @@ let update_variable ast var =
   | true -> failwith "Freezed variable!"
   | false ->
       let new_value = ast in
-      let new_history = new_value :: var.history in
+      let new_history = var.history @ [new_value] in
       let new_var =
         {
           name = var.name;

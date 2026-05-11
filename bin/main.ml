@@ -11,6 +11,8 @@ let () =
     \  Test = 2 + 2*3+2\n\n\
     \  Test = Test + 1\n
     \  Test = Test - 1\n
+    \  Test = 100\n
+    \  Test = 50\n
     \  Total = Y + Test\n\n\
     \  .debug Total
     \   \n\
