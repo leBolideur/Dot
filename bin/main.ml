@@ -1,7 +1,7 @@
 open Dot.Lexer
 open Dot.Parser
 open Dot.Eval
-(* open Dot.Env *)
+
 
 let () =
   let state = { index = 0; line = 1 } in
@@ -12,6 +12,7 @@ let () =
     \  Test = Test + 1\n
     \  Test = Test - 1\n
     \  Total = Y + Test\n\n\
+    \  .debug Total
     \   \n\
     \   .print Total\n\
     \   \n\n\

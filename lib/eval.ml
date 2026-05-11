@@ -1,12 +1,6 @@
 open Parser
 open Env
 
-let rec var_history_by_name env name =
-  match env with
-  | [] -> None
-  | hd :: _ when hd.name == name -> Some hd.history
-  | _ :: tl -> var_history_by_name tl name
-
 let rec eval_ast ast env =
   match ast with
   | IntLit nb -> VInt nb
@@ -98,12 +92,12 @@ let rec run program_stmts env =
           let history = var_history_by_name env var_name in
           match history with
           | None ->
-            Printf.printf "var_name = %s -- len = \n" var_name;
             print_env env;
               Printf.printf ".debug > no history for %s\n" var_name;
               run tl env
           | Some hist ->
-              Printf.printf "BI Debug history len: %d\n" (List.length hist);
+              Printf.printf ".debug > history len for %s : %d\n" var_name (List.length hist);
+              print_history var_name hist 0;
               run tl env)
       (* | "debug", _ ->
         failwith ".debug is not available for this type or expression" *)
