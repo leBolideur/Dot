@@ -21,6 +21,7 @@ let () =
     \   Str = \"Hello\".\n\
     \   .print Str\n\
     \   .print \"World!\"\n\
+    \   Test.
     \   .debug Test\n\
     \   Freeze = 4."
   in

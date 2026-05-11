@@ -98,6 +98,7 @@ let rec run program_stmts env =
           | Some hist ->
               Printf.printf ".debug > history len for %s : %d\n" var_name (List.length hist);
               print_history var_name hist 0;
+              Printf.printf "Is freezed? %b\n" (is_var_name_freezed env var_name);
               run tl env)
       (* | "debug", _ ->
         failwith ".debug is not available for this type or expression" *)

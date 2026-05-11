@@ -81,3 +81,9 @@ let rec var_history_by_name env name =
   | [] -> None
   | hd :: _ when hd.name = name -> Some hd.history
   | _ :: tl -> var_history_by_name tl name
+
+let rec is_var_name_freezed env name =
+  match env with
+  | [] -> false
+  | hd :: _ when hd.name = name -> hd.freezed
+  | _ :: tl -> is_var_name_freezed tl name
