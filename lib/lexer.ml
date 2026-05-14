@@ -22,6 +22,8 @@ type token_type =
   | RPAREN
   | NEWLINE
   | DIFF
+  | IF
+  | ELSE
 
 type token = { kind : token_type }
 type state = { index : int; line : int }
@@ -50,6 +52,8 @@ let print_token token =
   | RPAREN -> print_endline "RPAREN"
   | DIFF -> print_endline "DIFF"
   | NEWLINE -> print_endline "NEWLINE"
+  | IF -> print_endline "IF"
+  | ELSE -> print_endline "ELSE"
   | EOF -> print_endline "EOF - So far so good!"
 
 let peek input state =
@@ -80,6 +84,12 @@ let rec read_int input state start =
 
 let is_next_char input state expected =
   match peek input (advance state) with Some c -> expected == c | _ -> false
+
+let if_keyword_get_token str =
+  match str with
+  | "if" -> Some { kind = IF }
+  | "else" -> Some { kind = ELSE }
+  | _ -> None
 
 let rec lex input state tokens =
   match peek input state with
