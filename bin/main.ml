@@ -23,7 +23,8 @@ let () =
     \   .print \"World!\"\n\
     \   Test.
     \   .debug Test\n\
-    \   Freeze = 4."
+    \   Freeze = 4.\n
+    \   if else foo bar"
   in
   let tokens = Dot.Lexer.lex input state [] in
   (* List.iter print_token (List.rev tokens); *)

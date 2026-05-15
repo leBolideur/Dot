@@ -91,6 +91,12 @@ let if_keyword_get_token str =
   | "else" -> Some { kind = ELSE }
   | _ -> None
 
+let if_builtin_get_token str =
+  match str with
+  | "print" -> Some { kind = EXPR_BUILTIN str }
+  | "debug" -> Some { kind = STMT_BUILTIN str }
+  | _ -> None
+
 let rec lex input state tokens =
   match peek input state with
   | Some ' ' -> lex input (advance state) tokens
@@ -104,16 +110,15 @@ let rec lex input state tokens =
       lex input (advance state) (token :: tokens)
   | Some 'a' .. 'z' -> (
       let state, result = read_ident input state state.index in
-      match result with
-      | "print" ->
-          let token = { kind = EXPR_BUILTIN result } in
+      match if_keyword_get_token result with
+      | Some token ->
           lex input state (token :: tokens)
-      | "debug" ->
-          let token = { kind = STMT_BUILTIN result } in
-          lex input state (token :: tokens)
-      | _ ->
-          let token = { kind = IDENT result } in
-          lex input state (token :: tokens))
+      | None -> (
+          match if_builtin_get_token result with
+          | Some token -> lex input state (token :: tokens)
+          | _ ->
+            let token = { kind = IDENT result } in
+            lex input state (token :: tokens)))
   | Some 'A' .. 'Z' ->
       let state, result = read_ident input state state.index in
       let token = { kind = VAR result } in
