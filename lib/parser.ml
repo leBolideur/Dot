@@ -112,9 +112,7 @@ let parse_comparison tokens =
   match rest with
   | { kind = EQ } :: tl -> 
     let right, rest' = parse_add tl in
-    let ast = (Eq (left, right), rest') in
-    print_ast (Eq (left, right));
-    ast
+    (Eq (left, right), rest')
   | _ ->
     (left, rest)
 
