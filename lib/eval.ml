@@ -5,9 +5,7 @@ let rec eval_ast ast env =
   match ast with
   | IntLit nb -> VInt nb
   | StrLit str -> VStr str
-  | Ident name ->
-      Printf.printf "IIIIIIII VIdent for %s\n" name;
-      VIdent name
+  | Ident name -> VIdent name
   | Var name -> (
       match find_in_env env name with
       | None ->
@@ -38,6 +36,12 @@ let rec eval_ast ast env =
       match (x, y) with
       | VInt a, VInt b -> VInt (a / b)
       | _ -> failwith "Type mismatch for operator /")
+  | Eq (left, right) -> (
+      let x = eval_ast left env in
+      let y = eval_ast right env in
+      match (x, y) with
+      | VInt a, VInt b -> VBool (a == b)
+      | _ -> failwith "Type mismatch for operator ==")
 
 let rec run program_stmts env =
   match program_stmts with
@@ -59,9 +63,6 @@ let rec run program_stmts env =
         | Some _ when is_freezed -> failwith "Variable already freezed"
         | Some entry ->
             let updated_var = update_variable (eval_ast ast env) entry in
-
-            (* print_var_history updated_var 0; *)
-
             let new_env = pop_env_by_var_name env updated_var.name in
             updated_var :: new_env
       in
@@ -84,6 +85,9 @@ let rec run program_stmts env =
           run tl env
       | "print", VStr str ->
           Printf.printf "%s\n" str;
+          run tl env
+      | "print", VBool boolean ->
+          Printf.printf "%b\n" boolean;
           run tl env
       | _ -> failwith "Unknown builtin")
   | Stmt_Builtin_st (name, ident) :: tl -> (

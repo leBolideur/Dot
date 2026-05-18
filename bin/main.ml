@@ -24,7 +24,9 @@ let () =
     \   Test.
     \   .debug Test\n\
     \   Freeze = 4.\n
-    \   if else foo bar"
+    \   if else foo bar\n
+    \   VBool = 1 + 5 == ((2 + 4) / 2) * 2\n
+    \   .print VBool"
   in
   let tokens = Dot.Lexer.lex input state [] in
   (* List.iter print_token (List.rev tokens); *)

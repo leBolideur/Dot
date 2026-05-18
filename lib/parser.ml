@@ -1,6 +1,6 @@
 open Lexer
 
-type value = VInt of int | VStr of string | VIdent of string | VUnit
+type value = VInt of int | VStr of string | VIdent of string | VBool of bool | VUnit
 
 type ast =
   | IntLit of int
@@ -11,6 +11,7 @@ type ast =
   | Minus of ast * ast
   | Mul of ast * ast
   | Div of ast * ast
+  | Eq of ast * ast
 
 type statement =
   | Decl_st of string * ast * bool (* bool = to_freeze *)
@@ -99,9 +100,26 @@ let rec print_ast ast =
       Printf.printf " / ";
       print_ast right;
       Printf.printf ")"
+  | Eq (left, right) ->
+      Printf.printf "(";
+      print_ast left;
+      Printf.printf " == ";
+      print_ast right;
+      Printf.printf ")"
+
+let parse_comparison tokens = 
+  let left, rest = parse_add tokens in
+  match rest with
+  | { kind = EQ } :: tl -> 
+    let right, rest' = parse_add tl in
+    let ast = (Eq (left, right), rest') in
+    print_ast (Eq (left, right));
+    ast
+  | _ ->
+    (left, rest)
 
 let parse_expression tokens =
-  let ast, rest = parse_add tokens in
+  let ast, rest = parse_comparison tokens in
   (ast, rest)
 
 let parse_var_st name tokens =
@@ -129,11 +147,6 @@ let rec parse tokens stmts =
     :: tl ->
       let stmt = Stmt_Builtin_st (name, ident) in
       parse tl (stmt :: stmts)
-  (*| { kind = VAR name } :: { kind = ASSIGN } :: { kind = STR_LIT s } :: tl ->
-      let node = StrLit s in
-      let to_freeze, rest = check_freeze tl in
-      let stmt = Decl_st (name, node, to_freeze) in
-      parse rest (stmt :: stmts) *)
   | { kind = VAR name } :: { kind = ASSIGN } :: tl ->
       let node, rest = parse_expression tl in
       let to_freeze, rest' = check_freeze rest in
