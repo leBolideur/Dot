@@ -19,6 +19,7 @@ type statement =
   | Freeze_st of string
   | Expr_Builtin_st of string * ast
   | Stmt_Builtin_st of string * string
+  | If_st of ast * statement list * statement list
 
 type program = { statements : statement list }
 
@@ -160,6 +161,9 @@ let rec parse tokens stmts =
       let node, rest = parse_expression tokens in
       let stmt = Expr_st node in
       parse rest (stmt :: stmts)
+  | { kind = IF } :: tl ->
+      let condition, rest = parse_expression tl in
+
   | token :: tl ->
       Printf.printf "Unknown token ";
       print_token token;

@@ -108,3 +108,4 @@ let rec run program_stmts env =
         failwith ".debug is not available for this type or expression" *)
       | _ -> failwith "Unknown builtin")
   | Expr_st _ :: tl -> run tl env
+  | If_st (_, _, _) :: tl -> run tl env
