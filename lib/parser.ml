@@ -131,7 +131,14 @@ let check_freeze tokens =
   | { kind = NEWLINE } :: tl -> (false, tl)
   | _ -> failwith "Expected . or newline"
 
-let rec parse tokens stmts =
+let rec parse_block_statements tokens =
+  match tokens with 
+  | { kind = DOT } :: tl -> tl
+  | rest ->
+    let stmts = parse rest [] in
+    stmts
+
+and parse tokens stmts =
   match tokens with
   | [] -> { statements = stmts }
   | { kind = EOF } :: _ -> { statements = stmts }
@@ -163,7 +170,12 @@ let rec parse tokens stmts =
       parse rest (stmt :: stmts)
   | { kind = IF } :: tl ->
       let condition, rest = parse_expression tl in
-
+      match rest with
+      | { kind = NEWLINE } :: tl -> 
+        let (if_stmts, rest) = parse_block_statements tl in
+        let stmt = If_st (condition, if_stmts, []) in
+        parse rest (stmt :: stmts)
+      | _ -> failwith "Syntaxe error, newline expected"
   | token :: tl ->
       Printf.printf "Unknown token ";
       print_token token;
