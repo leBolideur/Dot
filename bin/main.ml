@@ -7,31 +7,26 @@ let () =
   let state = { index = 0; line = 1 } in
 
   let input =
-    "Y = 7 * 7\n\n\
-    \  Test = 2 + 2*3+2\n\n\
-    \  Test = Test + 1\n
-    \  Test = Test - 1\n
-    \  Test = 100\n
-    \  Test = 50\n
-    \  Total = Y + Test\n\n\
-    \  .debug Total
-    \   \n\
-    \   .print Total\n\
-    \   \n\n\
+    "
     \   Str = \"Hello\".\n\
     \   .print Str\n\
     \   .print \"World!\"\n\
-    \   Test.
-    \   .debug Test\n\
     \   Freeze = 4.\n
-    \   if else foo bar\n
+    
     \   VBool = 1 + 5 == ((2 + 4) / 2) * 2\n
+    \   if VBool
+          .print \"VBool trueee\"
+          .
+    \   else\n
+          .print \"VBool faaaaalse\"
+          .
+          
     \   .print VBool"
   in
   let tokens = Dot.Lexer.lex input state [] in
   (* List.iter print_token (List.rev tokens); *)
 
-  let { statements = stmts } = Dot.Parser.parse (List.rev tokens) [] in
+  let ({ statements = stmts }, _) = Dot.Parser.parse (List.rev tokens) [] in
 
   let _ = run (List.rev stmts) [] in
   (* print_env env; *)

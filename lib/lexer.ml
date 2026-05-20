@@ -33,7 +33,7 @@ let print_token token =
   | INT nb -> Printf.printf "INT : %d\n" nb
   | IDENT ident -> Printf.printf "IDENT : %s\n" ident
   | VAR name -> Printf.printf "VAR : %s\n" name
-  | STR_LIT str -> Printf.printf "STRING : %s\n" str
+  | STR_LIT str -> Printf.printf "STR_LIT : %s\n" str
   | EXPR_BUILTIN name -> Printf.printf "EXPR_BUILTIN : %s\n" name
   | STMT_BUILTIN name -> Printf.printf "STMT_BUILTIN : %s\n" name
   | DOT -> print_endline "DOT ."

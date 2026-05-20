@@ -108,4 +108,9 @@ let rec run program_stmts env =
         failwith ".debug is not available for this type or expression" *)
       | _ -> failwith "Unknown builtin")
   | Expr_st _ :: tl -> run tl env
-  | If_st (_, _, _) :: tl -> run tl env
+  | If_st (cond, consequence, alternative) :: tl ->
+    let eval_cond = eval_ast cond env in
+    (match eval_cond with
+    | VBool b when b == true -> run consequence env
+    | _ -> run alternative env)
+    run tl env

@@ -25,6 +25,7 @@ type program = { statements : statement list }
 
 let rec parse_primary tokens =
   match tokens with
+  | [] -> failwith "Fail parse_primary: empty tokens list"
   | { kind = INT nb } :: tl -> (IntLit nb, tl)
   | { kind = STR_LIT str } :: tl -> (StrLit str, tl)
   | { kind = IDENT name } :: tl -> (Ident name, tl)
@@ -34,7 +35,10 @@ let rec parse_primary tokens =
       match rest with
       | { kind = RPAREN } :: tl' -> (right, tl')
       | _ -> failwith "Missing RPAREN")
-  | _ -> failwith "Fail parse_primary"
+  | token :: _ ->
+     print_token token;
+     failwith "Fail parse_primary"
+  
 
 and parse_factor tokens =
   let left, rest = parse_primary tokens in
@@ -133,15 +137,15 @@ let check_freeze tokens =
 
 let rec parse_block_statements tokens =
   match tokens with 
-  | { kind = DOT } :: tl -> tl
+  | { kind = DOT } :: tl -> ([], tl)
   | rest ->
-    let stmts = parse rest [] in
-    stmts
+    let ({ statements = stmts }, rest) = parse rest [] in
+    (stmts, rest)
 
 and parse tokens stmts =
   match tokens with
-  | [] -> { statements = stmts }
-  | { kind = EOF } :: _ -> { statements = stmts }
+  | [] -> ({ statements = stmts }, [])
+  | { kind = EOF } :: _ -> ({ statements = stmts }, [])
   | { kind = NEWLINE } :: tl -> parse tl stmts
   | { kind = DOT } :: { kind = EXPR_BUILTIN name } :: tl ->
       let node, rest = parse_expression tl in
@@ -153,6 +157,9 @@ and parse tokens stmts =
     :: tl ->
       let stmt = Stmt_Builtin_st (name, ident) in
       parse tl (stmt :: stmts)
+  | { kind = DOT } :: tl ->
+    (* End of block*)
+    ({ statements = stmts}, tl)
   | { kind = VAR name } :: { kind = ASSIGN } :: tl ->
       let node, rest = parse_expression tl in
       let to_freeze, rest' = check_freeze rest in
@@ -168,14 +175,14 @@ and parse tokens stmts =
       let node, rest = parse_expression tokens in
       let stmt = Expr_st node in
       parse rest (stmt :: stmts)
-  | { kind = IF } :: tl ->
+  | { kind = IF } :: tl -> (
       let condition, rest = parse_expression tl in
       match rest with
       | { kind = NEWLINE } :: tl -> 
         let (if_stmts, rest) = parse_block_statements tl in
         let stmt = If_st (condition, if_stmts, []) in
         parse rest (stmt :: stmts)
-      | _ -> failwith "Syntaxe error, newline expected"
+      | _ -> failwith "Syntaxe error, newline expected")
   | token :: tl ->
       Printf.printf "Unknown token ";
       print_token token;
