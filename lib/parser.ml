@@ -136,11 +136,8 @@ let check_freeze tokens =
   | _ -> failwith "Expected . or newline"
 
 let rec parse_block_statements tokens =
-  match tokens with 
-  | { kind = DOT } :: tl -> ([], tl)
-  | rest ->
-    let ({ statements = stmts }, rest) = parse rest [] in
-    (stmts, rest)
+  let ({ statements = stmts }, rest) = parse tokens [] in
+  (stmts, rest)
 
 and parse tokens stmts =
   match tokens with
@@ -177,19 +174,15 @@ and parse tokens stmts =
       parse rest (stmt :: stmts)
   | { kind = IF } :: tl -> (
       let condition, rest = parse_expression tl in
-
+    
       match rest with
       | { kind = NEWLINE } :: tl -> 
         let (if_stmts, rest') = parse_block_statements tl in
-        print_token (List.nth rest' 0);
-
         (match rest' with
-        | { kind = ELSE } :: tl' -> 
+        | { kind = NEWLINE } :: { kind = ELSE } :: tl' -> 
           let (else_stmts, rest) = parse_block_statements tl' in
-          Printf.printf "parser - else stmts len > %d\n" (List.length else_stmts);
           let stmt = If_st (condition, if_stmts, else_stmts) in
           parse rest (stmt :: stmts)
-          (* | _ -> failwith "Syntaxe error, newline expected")*)
         | _ ->
           let stmt = If_st (condition, if_stmts, []) in
           parse rest (stmt :: stmts))

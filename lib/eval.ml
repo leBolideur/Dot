@@ -109,10 +109,7 @@ let rec run program_stmts env =
   | If_st (cond, consequence, alternative) :: _ ->
     let eval_cond = eval_ast cond env in
     match eval_cond with
-    | VBool true -> 
-        run consequence env
-    | _ -> 
-        Printf.printf "eval - else stmts len > %d\n" (List.length alternative);
-        run alternative env
+    | VBool true -> run consequence env
+    | _ -> run alternative env
     (*run tl env*)
    
