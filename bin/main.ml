@@ -8,20 +8,18 @@ let () =
 
   let input =
     "
-    \   Str = \"Hello\".\n\
+    \   Str = \"Hello\".\n
     \   .print Str\n\
-    \   .print \"World!\"\n\
+    \   .print \"World!\"\n
     \   Freeze = 4.\n
-    
-    \   VBool = 1 + 5 == ((2 + 4) / 2) * 2\n
-    \   if VBool
-          .print \"VBool trueee\"
-          .
+    \   VBool = 1 + 8 == ((2 + 4) / 2) * 2\n
+    \   if VBool\n
+    \     .print \"VBool trueee in IFFFFFF\"\n
+    \     .
     \   else\n
-          .print \"VBool faaaaalse\"
-          .
-          
-    \   .print VBool"
+    \      .print \"VBool faaaaalse in ELLLLLSE\"\n
+    \      .\n  
+    \   .print VBool\n"
   in
   let tokens = Dot.Lexer.lex input state [] in
   (* List.iter print_token (List.rev tokens); *)
@@ -31,4 +29,4 @@ let () =
   let _ = run (List.rev stmts) [] in
   (* print_env env; *)
 
-  print_endline "so far, so good!"
+  print_endline "\n\nso far, so good!"

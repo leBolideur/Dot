@@ -79,8 +79,8 @@ let rec print_ast ast =
       let number_str = string_of_int number in
       Printf.printf "%s" number_str
   | StrLit str -> Printf.printf "%s" str
-  | Ident name -> Printf.printf "ident: %s" name
-  | Var name -> Printf.printf "Var %s = " name
+  | Ident name -> Printf.printf "Ident: %s" name
+  | Var name -> Printf.printf "Var %s" name
   | Add (left, right) ->
       Printf.printf "(";
       print_ast left;
@@ -177,11 +177,23 @@ and parse tokens stmts =
       parse rest (stmt :: stmts)
   | { kind = IF } :: tl -> (
       let condition, rest = parse_expression tl in
+
       match rest with
       | { kind = NEWLINE } :: tl -> 
-        let (if_stmts, rest) = parse_block_statements tl in
-        let stmt = If_st (condition, if_stmts, []) in
-        parse rest (stmt :: stmts)
+        let (if_stmts, rest') = parse_block_statements tl in
+        print_token (List.nth rest' 0);
+
+        (match rest' with
+        | { kind = ELSE } :: tl' -> 
+          let (else_stmts, rest) = parse_block_statements tl' in
+          Printf.printf "parser - else stmts len > %d\n" (List.length else_stmts);
+          let stmt = If_st (condition, if_stmts, else_stmts) in
+          parse rest (stmt :: stmts)
+          (* | _ -> failwith "Syntaxe error, newline expected")*)
+        | _ ->
+          let stmt = If_st (condition, if_stmts, []) in
+          parse rest (stmt :: stmts))
+
       | _ -> failwith "Syntaxe error, newline expected")
   | token :: tl ->
       Printf.printf "Unknown token ";

@@ -96,7 +96,7 @@ let rec run program_stmts env =
           let history = var_history_by_name env var_name in
           match history with
           | None ->
-            print_env env;
+              print_env env;
               Printf.printf ".debug > no history for %s\n" var_name;
               run tl env
           | Some hist ->
@@ -104,13 +104,15 @@ let rec run program_stmts env =
               print_history var_name hist 0;
               Printf.printf "Is freezed? %b\n" (is_var_name_freezed env var_name);
               run tl env)
-      (* | "debug", _ ->
-        failwith ".debug is not available for this type or expression" *)
       | _ -> failwith "Unknown builtin")
   | Expr_st _ :: tl -> run tl env
-  | If_st (cond, consequence, alternative) :: tl ->
+  | If_st (cond, consequence, alternative) :: _ ->
     let eval_cond = eval_ast cond env in
-    (match eval_cond with
-    | VBool b when b == true -> run consequence env
-    | _ -> run alternative env)
-    run tl env
+    match eval_cond with
+    | VBool true -> 
+        run consequence env
+    | _ -> 
+        Printf.printf "eval - else stmts len > %d\n" (List.length alternative);
+        run alternative env
+    (*run tl env*)
+   
