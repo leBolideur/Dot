@@ -43,6 +43,19 @@ let rec eval_ast ast env =
       | VInt a, VInt b -> VBool (a == b)
       | _ -> failwith "Type mismatch for operator ==")
 
+
+let rec print_stmts stmts = 
+    match stmts with
+    | [] -> print_endline "End of stmts list"
+    | Decl_st (name, _, freezed) :: tl ->
+        Printf.printf "Decl_st -> name = %s\tfreezed = %b\n" name freezed;
+        print_stmts tl
+    | Expr_Builtin_st (name, ast) :: tl ->
+        Printf.printf "Expr_Builtin_st -> name = %s\n\tast:\n\t" name;
+        print_ast ast;
+        print_stmts tl
+    | _ :: tl -> print_endline "Other stmt"; print_stmts tl
+
 let rec run program_stmts env =
   match program_stmts with
   | [] -> env
@@ -106,10 +119,13 @@ let rec run program_stmts env =
               run tl env)
       | _ -> failwith "Unknown builtin")
   | Expr_st _ :: tl -> run tl env
-  | If_st (cond, consequence, alternative) :: _ ->
+  | If_st (cond, consequence, alternative) :: tl ->
     let eval_cond = eval_ast cond env in
     match eval_cond with
-    | VBool true -> run consequence env
-    | _ -> run alternative env
-    (*run tl env*)
+    | VBool true ->
+        let new_env = run (List.rev consequence) env in
+        run tl new_env
+    | _ -> 
+        let new_env = run (List.rev alternative) env in
+        run tl new_env
    

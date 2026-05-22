@@ -68,6 +68,9 @@ let rec print_history var_name history index =
       | VStr str ->
           Printf.printf "%s@%d = %s\n" var_name index str;
           print_history var_name history (index + 1)
+      | VBool boolean ->
+          Printf.printf "%s@%d = %b\n" var_name index boolean;
+          print_history var_name history (index + 1)
       | _ -> print_history var_name history (index + 1))
 
 let rec pop_env_by_var_name env name =

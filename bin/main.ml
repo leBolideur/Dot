@@ -10,9 +10,14 @@ let () =
     VBool = 1 + 8 == ((2 + 4) / 2) * 2
     if VBool
       .print \"trueee in IFFFFFF\"
+      Foo = \"Hello, Dot!\"
+      .print Foo
       .
     else
       .print \"faaaaalse in ELLLLLSE\"
+      Res = 1 + 5 == 7.
+      .print Res
+      .debug Res
       .
     .print VBool"
   in
