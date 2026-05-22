@@ -43,7 +43,6 @@ let rec eval_ast ast env =
       | VInt a, VInt b -> VBool (a == b)
       | _ -> failwith "Type mismatch for operator ==")
 
-
 let rec print_stmts stmts = 
     match stmts with
     | [] -> print_endline "End of stmts list"
@@ -123,9 +122,9 @@ let rec run program_stmts env =
     let eval_cond = eval_ast cond env in
     match eval_cond with
     | VBool true ->
-        let new_env = run (List.rev consequence) env in
-        run tl new_env
+        let _ = run (List.rev consequence) env in
+        run tl env
     | _ -> 
-        let new_env = run (List.rev alternative) env in
-        run tl new_env
+        let _ = run (List.rev alternative) env in
+        run tl env
    

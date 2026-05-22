@@ -8,18 +8,18 @@ let () =
 
   let input = "
     VBool = 1 + 8 == ((2 + 4) / 2) * 2
+    Res = \"Neutral for now\"
     if VBool
-      .print \"trueee in IFFFFFF\"
-      Foo = \"Hello, Dot!\"
-      .print Foo
+      Res = \"Super True\"
+      .print Res
       .
     else
-      .print \"faaaaalse in ELLLLLSE\"
-      Res = 1 + 5 == 7.
       .print Res
-      .debug Res
+      Res = \"Bad False\"
+      .print Res
       .
-    .print VBool"
+    .print VBool
+    .print Res"
   in
   let tokens = Dot.Lexer.lex input state [] in
   (*List.iter print_token (List.rev tokens);*)
