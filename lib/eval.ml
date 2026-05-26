@@ -60,8 +60,8 @@ let rec run program_stmts env =
   | [] -> env
   | Decl_st (var_name, ast, is_freezed) :: tl ->
       let new_env =
-        match find_in_env env var_name with
-        | None ->
+        match find_in_local_env env var_name with
+        | None | Some (ScopeMarker, _) ->
             let value = eval_ast ast env in
             let var =
               {
@@ -71,12 +71,12 @@ let rec run program_stmts env =
                 history = value :: [];
               }
             in
-            var :: env
+            Entry var :: env
         | Some _ when is_freezed -> failwith "Variable already freezed"
-        | Some entry ->
+        | Some (Entry entry, _) ->
             let updated_var = update_variable (eval_ast ast env) entry in
             let new_env = pop_env_by_var_name env updated_var.name in
-            updated_var :: new_env
+            Entry updated_var :: new_env
       in
       run tl new_env
   | Freeze_st name :: tl ->
@@ -88,7 +88,7 @@ let rec run program_stmts env =
       let new_var = { var_to_freeze with freezed = true } in
       let new_env = pop_env_by_var_name env name in
 
-      run tl (new_var :: new_env)
+      run tl (Entry new_var :: new_env)
   | Expr_Builtin_st (name, ast) :: tl -> (
       let node = eval_ast ast env in
       match (name, node) with
@@ -122,9 +122,13 @@ let rec run program_stmts env =
     let eval_cond = eval_ast cond env in
     match eval_cond with
     | VBool true ->
-        let _ = run (List.rev consequence) env in
+        
+        let _ = run (List.rev consequence) (ScopeMarker :: env) in
+        print_env (ScopeMarker :: env);
         run tl env
     | _ -> 
-        let _ = run (List.rev alternative) env in
+      
+        let _ = run (List.rev alternative) (ScopeMarker :: env) in
+        print_env (ScopeMarker :: env);
         run tl env
    

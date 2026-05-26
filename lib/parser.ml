@@ -188,6 +188,7 @@ and parse tokens stmts =
           parse rest (stmt :: stmts))
 
       | _ -> failwith "Syntaxe error, newline expected")
+  (*| { kind = ELSE } :: tl -> parse tl stmts *)
   | token :: tl ->
       Printf.printf "Unknown token ";
       print_token token;
