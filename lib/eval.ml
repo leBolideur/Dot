@@ -43,17 +43,19 @@ let rec eval_ast ast env =
       | VInt a, VInt b -> VBool (a == b)
       | _ -> failwith "Type mismatch for operator ==")
 
-let rec print_stmts stmts = 
-    match stmts with
-    | [] -> print_endline "End of stmts list"
-    | Decl_st (name, _, freezed) :: tl ->
-        Printf.printf "Decl_st -> name = %s\tfreezed = %b\n" name freezed;
-        print_stmts tl
-    | Expr_Builtin_st (name, ast) :: tl ->
-        Printf.printf "Expr_Builtin_st -> name = %s\n\tast:\n\t" name;
-        print_ast ast;
-        print_stmts tl
-    | _ :: tl -> print_endline "Other stmt"; print_stmts tl
+let rec print_stmts stmts =
+  match stmts with
+  | [] -> print_endline "End of stmts list"
+  | Decl_st (name, _, freezed) :: tl ->
+      Printf.printf "Decl_st -> name = %s\tfreezed = %b\n" name freezed;
+      print_stmts tl
+  | Expr_Builtin_st (name, ast) :: tl ->
+      Printf.printf "Expr_Builtin_st -> name = %s\n\tast:\n\t" name;
+      print_ast ast;
+      print_stmts tl
+  | _ :: tl ->
+      print_endline "Other stmt";
+      print_stmts tl
 
 let rec run program_stmts env =
   match program_stmts with
@@ -61,7 +63,7 @@ let rec run program_stmts env =
   | Decl_st (var_name, ast, is_freezed) :: tl ->
       let new_env =
         match find_in_local_env env var_name with
-        | None | Some (ScopeMarker, _) ->
+        | None ->
             let value = eval_ast ast env in
             let var =
               {
@@ -73,7 +75,7 @@ let rec run program_stmts env =
             in
             Entry var :: env
         | Some _ when is_freezed -> failwith "Variable already freezed"
-        | Some (Entry entry, _) ->
+        | Some entry ->
             let updated_var = update_variable (eval_ast ast env) entry in
             let new_env = pop_env_by_var_name env updated_var.name in
             Entry updated_var :: new_env
@@ -112,23 +114,20 @@ let rec run program_stmts env =
               Printf.printf ".debug > no history for %s\n" var_name;
               run tl env
           | Some hist ->
-              Printf.printf ".debug > history len for %s : %d\n" var_name (List.length hist);
+              Printf.printf ".debug > history len for %s : %d\n" var_name
+                (List.length hist);
               print_history var_name hist 0;
-              Printf.printf "Is freezed? %b\n" (is_var_name_freezed env var_name);
+              Printf.printf "Is freezed? %b\n"
+                (is_var_name_freezed env var_name);
               run tl env)
       | _ -> failwith "Unknown builtin")
   | Expr_st _ :: tl -> run tl env
-  | If_st (cond, consequence, alternative) :: tl ->
-    let eval_cond = eval_ast cond env in
-    match eval_cond with
-    | VBool true ->
-        
-        let _ = run (List.rev consequence) (ScopeMarker :: env) in
-        print_env (ScopeMarker :: env);
-        run tl env
-    | _ -> 
-      
-        let _ = run (List.rev alternative) (ScopeMarker :: env) in
-        print_env (ScopeMarker :: env);
-        run tl env
-   
+  | If_st (cond, consequence, alternative) :: tl -> (
+      let eval_cond = eval_ast cond env in
+      match eval_cond with
+      | VBool true ->
+          let _ = run (List.rev consequence) (ScopeMarker :: env) in
+          run tl env
+      | _ ->
+          let _ = run (List.rev alternative) (ScopeMarker :: env) in
+          run tl env)
