@@ -70,11 +70,10 @@ let rec read_ident input state start =
 
 let rec read_builtin_name input state start = 
   match peek input state with
-  | Some 'a' .. 'z' -> read_builtin_name input (advance state) start
-  | Some ' ' | Some _ | None ->
-    let name =  String.sub input start (state.index - start) in
-    Printf.printf "\nread_bi > name = %s\tindex: %d - start: %d\n" name state.index start;
-      (state, name)
+  | Some 'a' .. 'z' -> 
+    read_builtin_name input (advance state) start
+  | Some _ | None ->
+    (state, String.sub input start (state.index - start))
 
 let is_next_builtin input state =
   match peek input (advance state) with Some 'a' .. 'z' -> true | _ -> false
@@ -117,8 +116,9 @@ let rec lex input state tokens =
         { index = state.index + 1; line = state.line + 1 }
         (token :: tokens)
   | Some '.' when is_next_builtin input state ->
-      let state, builtin_name = read_builtin_name input state state.index in
-      Printf.printf "\nbuiltin_name = %s\n" builtin_name;
+      (* Consume the dot *)
+      let advanced_state = advance state in
+      let state, builtin_name = read_builtin_name input advanced_state advanced_state.index in
       (match if_builtin_get_token builtin_name with
         | Some token -> lex input (advance state) (token :: tokens)
         | None -> failwith "Unknown builtin!")

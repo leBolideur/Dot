@@ -144,14 +144,11 @@ and parse tokens stmts =
   | [] -> ({ statements = stmts }, [])
   | { kind = EOF } :: _ -> ({ statements = stmts }, [])
   | { kind = NEWLINE } :: tl -> parse tl stmts
-  | { kind = DOT } :: { kind = EXPR_BUILTIN name } :: tl ->
+  | { kind = EXPR_BUILTIN name } :: tl ->
       let node, rest = parse_expression tl in
       let stmt = Expr_Builtin_st (name, node) in
       parse rest (stmt :: stmts)
-  | { kind = DOT }
-    :: { kind = STMT_BUILTIN name }
-    :: { kind = VAR ident }
-    :: tl ->
+  | { kind = STMT_BUILTIN name } :: { kind = VAR ident } :: tl ->
       let stmt = Stmt_Builtin_st (name, ident) in
       parse tl (stmt :: stmts)
   | { kind = DOT } :: tl ->
@@ -174,20 +171,18 @@ and parse tokens stmts =
       parse rest (stmt :: stmts)
   | { kind = IF } :: tl -> (
       let condition, rest = parse_expression tl in
-    
       match rest with
       | { kind = NEWLINE } :: tl -> (
         let (if_stmts, rest') = parse_block_statements tl in
-          List.iter print_token rest';
         (match rest' with
-        | { kind = NEWLINE } :: { kind = DOT} :: { kind = ELSE } :: tl' -> 
+        | { kind = NEWLINE } :: { kind = DOT} :: { kind = NEWLINE } :: { kind = ELSE } :: tl' -> 
           let (else_stmts, rest) = parse_block_statements tl' in
           let stmt = If_st (condition, if_stmts, else_stmts) in
           parse rest (stmt :: stmts)
         | { kind = NEWLINE } :: { kind = DOT } :: tl'' ->
           let stmt = If_st (condition, if_stmts, []) in
           parse tl'' (stmt :: stmts)
-        | { kind = NEWLINE } :: _ -> failwith "Condition syntax error! Dot expected"
+        (*| { kind = NEWLINE } :: _ -> failwith "Condition syntax error! Dot expected"*)
         | _ -> failwith "Condition syntax error!")
       )
 
