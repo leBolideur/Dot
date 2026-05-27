@@ -175,15 +175,16 @@ and parse tokens stmts =
       | { kind = NEWLINE } :: tl -> (
         let (if_stmts, rest') = parse_block_statements tl in
         (match rest' with
-        | { kind = NEWLINE } :: { kind = DOT} :: { kind = NEWLINE } :: { kind = ELSE } :: tl' -> 
-          let (else_stmts, rest) = parse_block_statements tl' in
+        | { kind = NEWLINE } :: { kind = ELSE } :: tl' -> 
+          let (else_stmts, rest'') = parse_block_statements tl' in
           let stmt = If_st (condition, if_stmts, else_stmts) in
-          parse rest (stmt :: stmts)
-        | { kind = NEWLINE } :: { kind = DOT } :: tl'' ->
+          parse rest'' (stmt :: stmts)
+        | { kind = NEWLINE } :: tl'' ->
           let stmt = If_st (condition, if_stmts, []) in
           parse tl'' (stmt :: stmts)
         (*| { kind = NEWLINE } :: _ -> failwith "Condition syntax error! Dot expected"*)
-        | _ -> failwith "Condition syntax error!")
+        | _ ->      
+          failwith "Condition syntax error!")
       )
 
       | _ -> failwith "Syntaxe error, newline expected"
