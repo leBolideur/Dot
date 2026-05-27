@@ -176,18 +176,23 @@ and parse tokens stmts =
       let condition, rest = parse_expression tl in
     
       match rest with
-      | { kind = NEWLINE } :: tl -> 
+      | { kind = NEWLINE } :: tl -> (
         let (if_stmts, rest') = parse_block_statements tl in
+          List.iter print_token rest';
         (match rest' with
-        | { kind = NEWLINE } :: { kind = ELSE } :: tl' -> 
+        | { kind = NEWLINE } :: { kind = DOT} :: { kind = ELSE } :: tl' -> 
           let (else_stmts, rest) = parse_block_statements tl' in
           let stmt = If_st (condition, if_stmts, else_stmts) in
           parse rest (stmt :: stmts)
-        | _ ->
+        | { kind = NEWLINE } :: { kind = DOT } :: tl'' ->
           let stmt = If_st (condition, if_stmts, []) in
-          parse rest (stmt :: stmts))
+          parse tl'' (stmt :: stmts)
+        | { kind = NEWLINE } :: _ -> failwith "Condition syntax error! Dot expected"
+        | _ -> failwith "Condition syntax error!")
+      )
 
-      | _ -> failwith "Syntaxe error, newline expected")
+      | _ -> failwith "Syntaxe error, newline expected"
+      )
   (*| { kind = ELSE } :: tl -> parse tl stmts *)
   | token :: tl ->
       Printf.printf "Unknown token ";

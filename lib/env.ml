@@ -10,20 +10,25 @@ type env_entry = {
 type env = Entry of env_entry | ScopeMarker
 
 let rec print_env env =
+  print_endline "-> Env:";
   match env with
-  | [] -> print_endline "End of env"
+  | [] -> print_endline "<- End of env"
   | Entry { name; freezed; value; history = var_hist } :: tl -> (
       match value with
       | VInt nb ->
-          Printf.printf "VInt - %s = %d is freezed? %b\thistory len = %d\n" name
+          Printf.printf "\tVInt - %s = %d is freezed? %b\thistory len = %d\n" name
             nb freezed (List.length var_hist);
           print_env tl
       | VStr str ->
-          Printf.printf "VStr - %s = %s is freezed? %b\n" name str freezed;
+          Printf.printf "\tVStr - %s = %s is freezed? %b\n" name str freezed;
+          print_env tl
+      | VBool boolean ->
+          Printf.printf "\tVBool - %s = %b is freezed? %b\thistory len = %d\n" name
+            boolean freezed (List.length var_hist);
           print_env tl
       | _ -> print_env tl)
   | ScopeMarker :: tl ->
-      print_endline "Scope Marker";
+      print_endline "\tScope Marker";
       print_env tl
 
 (*let rec find_in_env env var_name =

@@ -56,26 +56,33 @@ else
 X = 100
 X.
 
-if true
+if 1 == 1
   X = 50
   .print \"TEST 5 - X dans if\"
   .
+else
+  .print \"TEST 5 - ELSE\"
+  .
+
 .print \"TEST 5 - X apres if\"
 
 Global = \"Je suis global\"
 
-if true
+if 1 == 1
   Local = \"Je suis local\"
   .print \"TEST 6 - Local dans if\"
   .print \"TEST 6 - Global dans if\"
+  .
+else
+  .print \"TEST 6 - ELSE\"
   .
 
 .print \"TEST 6 - Global apres if\"
 
 Y = 1
-if true
+if Y == 1
   Y = 2
-  if true
+  if Y == 2
     Y = 3
     .print \"TEST 7 - Y niveau 3\"
     .
@@ -102,7 +109,7 @@ if Start == 10
   .
 .print \"TEST 10 - Start\"
 
-if true == true
+if 1 == 1
   .print \"TEST 11 - Bool fonctionne\"
   .
 
