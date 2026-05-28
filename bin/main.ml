@@ -84,6 +84,9 @@ Priority = 2 + 3 * 4
 Parentheses = (2 + 3) * 4
 .print \"TEST 12 - Parentheses\"
 
+
+test_func() -> 1 + 2 
+
 .print \"========================================\"
 .print \"Tous les tests termines\"
 .print \"Si vous voyez ce message, DotLang v0.1 est operationnel\"

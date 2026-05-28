@@ -189,7 +189,9 @@ and parse tokens stmts =
 
       | _ -> failwith "Syntaxe error, newline expected"
       )
-  (*| { kind = ELSE } :: tl -> parse tl stmts *)
+  | { kind = IDENT ident } :: { kind = LPAREN } :: { kind = RPAREN} :: { kind = RIGHT_ARROW} :: tl ->
+    print_endline ("FUNCTION! - " ^ ident);
+    parse tl stmts
   | token :: tl ->
       Printf.printf "Unknown token ";
       print_token token;

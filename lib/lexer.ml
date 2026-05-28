@@ -24,6 +24,7 @@ type token_type =
   | DIFF
   | IF
   | ELSE
+  | RIGHT_ARROW
 
 type token = { kind : token_type }
 type state = { index : int; line : int }
@@ -54,6 +55,7 @@ let print_token token =
   | NEWLINE -> print_endline "NEWLINE"
   | IF -> print_endline "IF"
   | ELSE -> print_endline "ELSE"
+  | RIGHT_ARROW -> print_endline "RIGHT_ARROW"
   | EOF -> print_endline "EOF - So far so good!"
 
 let peek input state =
@@ -182,6 +184,9 @@ let rec lex input state tokens =
   | Some '+' ->
       let token = { kind = PLUS } in
       lex input (advance state) (token :: tokens)
+  | Some '-' when is_next_char input state '>' ->
+      let token = { kind = RIGHT_ARROW } in
+      lex input (advance (advance state)) (token :: tokens)
   | Some '-' ->
       let token = { kind = MINUS } in
       lex input (advance state) (token :: tokens)
