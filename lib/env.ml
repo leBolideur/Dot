@@ -10,9 +10,9 @@ type env_entry = {
 type env = Entry of env_entry | ScopeMarker
 
 let rec print_env env =
-  print_endline "-> Env:";
+  print_endline "\n-> Env:";
   match env with
-  | [] -> print_endline "<- End of env"
+  | [] -> print_endline "<- End of env\n"
   | Entry { name; freezed; value; history = var_hist } :: tl -> (
       match value with
       | VInt nb ->
@@ -102,8 +102,9 @@ let rec pop_env_by_var_name env name =
 let rec replace_in_local_env env new_var =
   match env with
   | [] -> []
-  | ScopeMarker :: tl -> env
-| 
+  | ScopeMarker :: _ -> env
+  | Entry entry :: tl when entry.name == new_var.name -> (Entry new_var :: tl)
+  | _ :: tl -> replace_in_local_env tl new_var
 
 let rec var_history_by_name env name =
   match env with

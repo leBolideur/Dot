@@ -77,8 +77,8 @@ let rec run program_stmts env =
         | Some _ when is_freezed -> failwith "Variable already freezed"
         | Some entry ->
             let updated_var = update_variable (eval_ast ast env) entry in
-            let new_env = pop_env_by_var_name env updated_var.name in
-            Entry updated_var :: new_env
+            let new_env = replace_in_local_env env updated_var in
+            new_env
       in
       run tl new_env
   | Freeze_st name :: tl ->
@@ -88,7 +88,7 @@ let rec run program_stmts env =
         | None -> failwith ("Unable to freeze this var: " ^ name)
       in
       let new_var = { var_to_freeze with freezed = true } in
-      let new_env = pop_env_by_var_name env name in
+      let new_env = replace_in_local_env env new_var in
 
       run tl (Entry new_var :: new_env)
   | Expr_Builtin_st (name, ast) :: tl -> (
@@ -123,14 +123,10 @@ let rec run program_stmts env =
       | _ -> failwith "Unknown builtin")
   | Expr_st _ :: tl -> run tl env
   | If_st (cond, consequence, alternative) :: tl -> (
-          print_endline "\n\nBEFORE if_env\n\n";
-          print_env env;
       let eval_cond = eval_ast cond env in
       match eval_cond with
       | VBool true ->
-          let if_env = run (List.rev consequence) (ScopeMarker :: env) in
-          print_endline "\n\nif_env\n\n";
-          print_env if_env;
+          let _ = run (List.rev consequence) (ScopeMarker :: env) in
           run tl env
       | _ ->
           let _ = run (List.rev alternative) (ScopeMarker :: env) in

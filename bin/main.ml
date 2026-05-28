@@ -14,9 +14,12 @@ Diff = A - B
 Prod = A * B
 Div = A / B
 
-.print A
 X = 100
 X.
+
+Foo = 55
+Foo = 122
+Foo.
 
 if A == 10
   X = 50
