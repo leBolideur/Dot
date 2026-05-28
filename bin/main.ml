@@ -14,10 +14,11 @@ Diff = A - B
 Prod = A * B
 Div = A / B
 
+.print A
 X = 100
 X.
 
-if 1 == 1
+if A == 10
   X = 50
   .print \"TEST 5 - X dans if\"
   .

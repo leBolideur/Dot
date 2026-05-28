@@ -83,7 +83,7 @@ let rec run program_stmts env =
       run tl new_env
   | Freeze_st name :: tl ->
       let var_to_freeze =
-        match find_in_env env name with
+        match find_in_local_env env name with
         | Some entry -> entry
         | None -> failwith ("Unable to freeze this var: " ^ name)
       in
@@ -123,10 +123,14 @@ let rec run program_stmts env =
       | _ -> failwith "Unknown builtin")
   | Expr_st _ :: tl -> run tl env
   | If_st (cond, consequence, alternative) :: tl -> (
+          print_endline "\n\nBEFORE if_env\n\n";
+          print_env env;
       let eval_cond = eval_ast cond env in
       match eval_cond with
       | VBool true ->
-          let _ = run (List.rev consequence) (ScopeMarker :: env) in
+          let if_env = run (List.rev consequence) (ScopeMarker :: env) in
+          print_endline "\n\nif_env\n\n";
+          print_env if_env;
           run tl env
       | _ ->
           let _ = run (List.rev alternative) (ScopeMarker :: env) in

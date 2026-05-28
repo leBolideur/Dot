@@ -97,7 +97,13 @@ let rec pop_env_by_var_name env name =
   match env with
   | [] -> []
   | Entry hd :: tl when hd.name == name -> tl
-  | _ :: tl -> pop_env_by_var_name tl name
+  | hd :: tl -> pop_env_by_var_name (hd :: tl) name
+
+let rec replace_in_local_env env new_var =
+  match env with
+  | [] -> []
+  | ScopeMarker :: tl -> env
+| 
 
 let rec var_history_by_name env name =
   match env with
