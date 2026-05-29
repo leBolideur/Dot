@@ -86,14 +86,26 @@ Parentheses = (2 + 3) * 4
 
 
 test_func() ->
- Add = 1 + 2 
+ Add = 1 + 5 
  Add.
- .print Add
+ if Add == 3
+  .print Add
+  .
+ else
+  .print \"Nooooot 3\"
+  .
  .
 
+hello() ->
+  .print \"Hello funcyion!\"
+  .
+
+test_func()
+hello()
 test_func()
 test_func()
-test_func()
+
+hello()
 
 .print \"========================================\"
 .print \"Tous les tests termines\"
