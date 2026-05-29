@@ -131,8 +131,9 @@ let rec run program_stmts env =
       | _ ->
           let _ = run (List.rev alternative) (ScopeMarker :: env) in
           run tl env)
-  | Func_st (name, body) :: tl ->
-    let vfun = VFun (name, body, env) in
+  | Func_st (name, args, body) :: tl ->
+    Printf.printf "Func_st args len: %d\n" (List.length args);
+    let vfun = VFun (name, args, body, env) in
     let entry = {
         name;
         freezed = false;
@@ -143,10 +144,11 @@ let rec run program_stmts env =
   | Call_st fun_name :: tl ->
     let fun_ = find_in_local_env env fun_name in
     (match fun_ with
-    | None -> failwith "No function found with that name"
+    | None -> failwith ("No function found with that name: " ^ fun_name)
     | Some entry ->
         (match entry.value with
-        | VFun (fname, fbody, fenv) when fname = fun_name ->
-            let _ = run (List.rev fbody) (ScopeMarker :: fenv) in
+        | VFun (fname, args, fbody, fenv) when fname = fun_name ->
+            Printf.printf "Call_st args len: %d\n" (List.length args);
+            let _ = run (List.rev fbody) (fenv) in
             run tl env
         | _ -> failwith "Not a function!"))

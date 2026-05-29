@@ -25,6 +25,7 @@ type token_type =
   | IF
   | ELSE
   | RIGHT_ARROW
+  | COMMA
 
 type token = { kind : token_type }
 type state = { index : int; line : int }
@@ -56,6 +57,7 @@ let print_token token =
   | IF -> print_endline "IF"
   | ELSE -> print_endline "ELSE"
   | RIGHT_ARROW -> print_endline "RIGHT_ARROW"
+  | COMMA -> print_endline "COMMA"
   | EOF -> print_endline "EOF - So far so good!"
 
 let peek input state =
@@ -126,6 +128,9 @@ let rec lex input state tokens =
         | None -> failwith "Unknown builtin!")
   | Some '.' ->
       let token = { kind = DOT } in
+      lex input (advance state) (token :: tokens)
+  | Some ',' ->
+      let token = { kind = COMMA } in
       lex input (advance state) (token :: tokens)
   | Some 'a' .. 'z' -> (
       let state, result = read_ident input state state.index in

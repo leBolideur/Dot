@@ -18,7 +18,7 @@ type statement =
   | Expr_Builtin_st of string * ast
   | Stmt_Builtin_st of string * string
   | If_st of ast * statement list * statement list
-  | Func_st of string * statement list
+  | Func_st of string * ast list * statement list
   | Call_st of string
 
 type program = { statements : statement list }
@@ -135,6 +135,16 @@ let check_freeze tokens =
   | { kind = NEWLINE } :: tl -> (false, tl)
   | _ -> failwith "Expected . or newline"
 
+let rec parse_fun_args tokens acc = 
+  print_endline "bouh";
+  match tokens with
+  | [] -> failwith "Syntax error on function args"
+  | { kind = RPAREN } :: tl -> (List.rev acc, tl)
+  | { kind = COMMA } :: tl -> parse_fun_args tl acc
+  | _ :: _ -> 
+    let (arg, rest) = parse_expression tokens in
+    parse_fun_args rest (arg :: acc)
+
 let rec parse_block_statements tokens =
   let ({ statements = stmts }, rest) = parse tokens [] in
   (stmts, rest)
@@ -189,13 +199,18 @@ and parse tokens stmts =
 
       | _ -> failwith "Syntaxe error, newline expected"
       )
-  | { kind = IDENT ident } :: { kind = LPAREN } :: { kind = RPAREN} :: { kind = RIGHT_ARROW} :: tl ->
-    let (block_stmts, rest) = parse_block_statements tl in
-    let stmt = Func_st (ident, block_stmts) in
-    parse rest (stmt :: stmts)
   | { kind = IDENT ident } :: { kind = LPAREN } :: { kind = RPAREN} :: tl ->
     let stmt = Call_st ident in
     parse tl (stmt :: stmts)
+  | { kind = IDENT ident } :: { kind = LPAREN } :: tl ->
+    let (args, rest) = parse_fun_args tl [] in
+    Printf.printf "parser - args len: %d\n" (List.length args);
+    (match rest with
+    | { kind = RIGHT_ARROW } :: tl ->
+      let (block_stmts, rest') = parse_block_statements tl in
+      let stmt = Func_st (ident, args, block_stmts) in
+      parse rest' (stmt :: stmts)
+    | _ -> failwith "Syntax error! Arrow expected")
   | token :: tl ->
       Printf.printf "Unknown token ";
       print_token token;
