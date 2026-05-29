@@ -136,14 +136,14 @@ let check_freeze tokens =
   | _ -> failwith "Expected . or newline"
 
 let rec parse_fun_args tokens acc = 
-  print_endline "bouh";
   match tokens with
   | [] -> failwith "Syntax error on function args"
   | { kind = RPAREN } :: tl -> (List.rev acc, tl)
   | { kind = COMMA } :: tl -> parse_fun_args tl acc
-  | _ :: _ -> 
+  | { kind = IDENT _ } :: _ | { kind = VAR _ } :: _ -> 
     let (arg, rest) = parse_expression tokens in
     parse_fun_args rest (arg :: acc)
+  | _ -> failwith "Args must be IDENT or VAR"
 
 let rec parse_block_statements tokens =
   let ({ statements = stmts }, rest) = parse tokens [] in

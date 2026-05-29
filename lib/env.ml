@@ -34,17 +34,13 @@ let rec print_env env =
           Printf.printf "\tVBool - %s = %b is freezed? %b\thistory len = %d\n" name
             boolean freezed (List.length var_hist);
           print_env tl
+      | VFun (fname, args, _, _) ->
+          Printf.printf "\tVFun - %s\targs len = %d\n" fname (List.length args);
+          print_env tl
       | _ -> print_env tl)
   | ScopeMarker :: tl ->
       print_endline "\tScope Marker";
       print_env tl
-
-(*let rec find_in_env env var_name =
-  match env with
-  | [] -> None
-  (*| ScopeMarker :: _ -> Some ScopeMarker*)
-  | Entry entry :: _ when entry.name = var_name -> Some entry
-  | _ :: tl -> find_in_env tl var_name*)
 
 let rec find_in_local_env env var_name =
   match env with

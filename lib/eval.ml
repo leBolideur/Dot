@@ -132,7 +132,6 @@ let rec run program_stmts env =
           let _ = run (List.rev alternative) (ScopeMarker :: env) in
           run tl env)
   | Func_st (name, args, body) :: tl ->
-    Printf.printf "Func_st args len: %d\n" (List.length args);
     let vfun = VFun (name, args, body, env) in
     let entry = {
         name;
