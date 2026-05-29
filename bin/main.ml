@@ -85,7 +85,11 @@ Parentheses = (2 + 3) * 4
 .print \"TEST 12 - Parentheses\"
 
 
-test_func() -> 1 + 2 
+test_func() ->
+ Add = 1 + 2 
+ Add.
+ .print Add
+ .
 
 .print \"========================================\"
 .print \"Tous les tests termines\"

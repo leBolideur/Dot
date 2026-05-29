@@ -131,3 +131,11 @@ let rec run program_stmts env =
       | _ ->
           let _ = run (List.rev alternative) (ScopeMarker :: env) in
           run tl env)
+  | Func_st (name, body) :: tl ->
+    Printf.printf "EVAL Func - name: %s\tstmts len: %d\n" name (List.length body);
+    let _ = run (List.rev body) (ScopeMarker :: env) in
+    run tl env
+  | Call_st name :: tl ->
+    Printf.printf "EVAL Call  - name: %s\tstmts len: %d\n" name (List.length body);
+    let _ = run (List.rev body) (ScopeMarker :: env) in
+    run tl env

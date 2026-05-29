@@ -20,6 +20,8 @@ type statement =
   | Expr_Builtin_st of string * ast
   | Stmt_Builtin_st of string * string
   | If_st of ast * statement list * statement list
+  | Func_st of string * statement list
+  | Call_st of string
 
 type program = { statements : statement list }
 
@@ -190,8 +192,12 @@ and parse tokens stmts =
       | _ -> failwith "Syntaxe error, newline expected"
       )
   | { kind = IDENT ident } :: { kind = LPAREN } :: { kind = RPAREN} :: { kind = RIGHT_ARROW} :: tl ->
-    print_endline ("FUNCTION! - " ^ ident);
-    parse tl stmts
+    let (block_stmts, rest) = parse_block_statements tl in
+    let stmt = Func_st (ident, block_stmts) in
+    parse rest (stmt :: stmts)
+  | { kind = IDENT ident } :: { kind = LPAREN } :: { kind = RPAREN} :: tl ->
+    let stmt = Call_st ident in
+    parse tl (stmt :: stmts)
   | token :: tl ->
       Printf.printf "Unknown token ";
       print_token token;
