@@ -1,13 +1,21 @@
 open Parser
 
-type env_entry = {
+type value = 
+  | VInt of int 
+  | VStr of string 
+  | VIdent of string 
+  | VBool of bool 
+  | VFun of string * statement list * env list 
+  | VUnit
+
+and env_entry = {
   name : string;
   freezed : bool;
   value : value;
   history : value list;
 }
 
-type env = Entry of env_entry | ScopeMarker
+and env = Entry of env_entry | ScopeMarker
 
 let rec print_env env =
   print_endline "\n-> Env:";

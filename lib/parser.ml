@@ -1,7 +1,5 @@
 open Lexer
 
-type value = VInt of int | VStr of string | VIdent of string | VBool of bool | VUnit
-
 type ast =
   | IntLit of int
   | StrLit of string

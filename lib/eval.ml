@@ -134,8 +134,22 @@ let rec run program_stmts env =
   | Func_st (name, body) :: tl ->
     Printf.printf "EVAL Func - name: %s\tstmts len: %d\n" name (List.length body);
     let _ = run (List.rev body) (ScopeMarker :: env) in
-    run tl env
-  | Call_st name :: tl ->
-    Printf.printf "EVAL Call  - name: %s\tstmts len: %d\n" name (List.length body);
-    let _ = run (List.rev body) (ScopeMarker :: env) in
-    run tl env
+    let vfun = VFun (name, body, env) in
+    let entry = {
+        name;
+        freezed = false;
+        value = vfun;
+        history = [];
+    } in
+    run tl (Entry entry :: env)
+  | Call_st fun_name :: tl ->
+    let fun_ = find_in_local_env env fun_name in
+    (match fun_ with
+    | None -> failwith "No function found with that name"
+    | Some entry ->
+        (match entry.value with
+        | VFun (fname, fbody, fenv) ->
+            Printf.printf "EVAL Call  - name: %s\tstmts len: %d\n" fname (List.length fbody);
+            let _ = run (List.rev fbody) (ScopeMarker :: fenv) in
+            run tl env
+        | _ -> failwith "Not a function!"))

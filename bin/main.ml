@@ -91,6 +91,10 @@ test_func() ->
  .print Add
  .
 
+test_func()
+test_func()
+test_func()
+
 .print \"========================================\"
 .print \"Tous les tests termines\"
 .print \"Si vous voyez ce message, DotLang v0.1 est operationnel\"
