@@ -36,9 +36,8 @@ let rec parse_primary tokens =
       | { kind = RPAREN } :: tl' -> (right, tl')
       | _ -> failwith "Missing RPAREN")
   | token :: _ ->
-     print_token token;
-     failwith "Fail parse_primary"
-  
+      print_token token;
+      failwith "Fail parse_primary"
 
 and parse_factor tokens =
   let left, rest = parse_primary tokens in
@@ -112,14 +111,13 @@ let rec print_ast ast =
       print_ast right;
       Printf.printf ")"
 
-let parse_comparison tokens = 
+let parse_comparison tokens =
   let left, rest = parse_add tokens in
   match rest with
-  | { kind = EQ } :: tl -> 
-    let right, rest' = parse_add tl in
-    (Eq (left, right), rest')
-  | _ ->
-    (left, rest)
+  | { kind = EQ } :: tl ->
+      let right, rest' = parse_add tl in
+      (Eq (left, right), rest')
+  | _ -> (left, rest)
 
 let parse_expression tokens =
   let ast, rest = parse_comparison tokens in
@@ -135,18 +133,18 @@ let check_freeze tokens =
   | { kind = NEWLINE } :: tl -> (false, tl)
   | _ -> failwith "Expected . or newline"
 
-let rec parse_fun_args tokens acc = 
+let rec parse_fun_args tokens acc =
   match tokens with
   | [] -> failwith "Syntax error on function args"
   | { kind = RPAREN } :: tl -> (List.rev acc, tl)
   | { kind = COMMA } :: tl -> parse_fun_args tl acc
-  | { kind = IDENT _ } :: _ | { kind = VAR _ } :: _ -> 
-    let (arg, rest) = parse_expression tokens in
-    parse_fun_args rest (arg :: acc)
+  | { kind = IDENT _ } :: _ | { kind = VAR _ } :: _ ->
+      let arg, rest = parse_expression tokens in
+      parse_fun_args rest (arg :: acc)
   | _ -> failwith "Args must be IDENT or VAR"
 
 let rec parse_block_statements tokens =
-  let ({ statements = stmts }, rest) = parse tokens [] in
+  let { statements = stmts }, rest = parse tokens [] in
   (stmts, rest)
 
 and parse tokens stmts =
@@ -162,8 +160,8 @@ and parse tokens stmts =
       let stmt = Stmt_Builtin_st (name, ident) in
       parse tl (stmt :: stmts)
   | { kind = DOT } :: tl ->
-    (* End of block*)
-    ({ statements = stmts}, tl)
+      (* End of block*)
+      ({ statements = stmts }, tl)
   | { kind = VAR name } :: { kind = ASSIGN } :: tl ->
       let node, rest = parse_expression tl in
       let to_freeze, rest' = check_freeze rest in
@@ -183,34 +181,33 @@ and parse tokens stmts =
       let condition, rest = parse_expression tl in
       match rest with
       | { kind = NEWLINE } :: tl -> (
-        let (if_stmts, rest') = parse_block_statements tl in
-        (match rest' with
-        | { kind = NEWLINE } :: { kind = ELSE } :: tl' -> 
-          let (else_stmts, rest'') = parse_block_statements tl' in
-          let stmt = If_st (condition, if_stmts, else_stmts) in
-          parse rest'' (stmt :: stmts)
-        | { kind = NEWLINE } :: tl'' ->
-          let stmt = If_st (condition, if_stmts, []) in
-          parse tl'' (stmt :: stmts)
-        (*| { kind = NEWLINE } :: _ -> failwith "Condition syntax error! Dot expected"*)
-        | _ ->      
-          failwith "Condition syntax error!")
-      )
-
+          let if_stmts, rest' = parse_block_statements tl in
+          match rest' with
+          | { kind = NEWLINE } :: { kind = ELSE } :: tl' ->
+              let else_stmts, rest'' = parse_block_statements tl' in
+              let stmt = If_st (condition, if_stmts, else_stmts) in
+              parse rest'' (stmt :: stmts)
+          | { kind = NEWLINE } :: tl'' ->
+              let stmt = If_st (condition, if_stmts, []) in
+              parse tl'' (stmt :: stmts)
+          (*| { kind = NEWLINE } :: _ -> failwith "Condition syntax error! Dot expected"*)
+          | _ -> failwith "Condition syntax error!")
       | _ -> failwith "Syntaxe error, newline expected"
-      )
-  | { kind = IDENT ident } :: { kind = LPAREN } :: { kind = RPAREN} :: tl ->
-    let stmt = Call_st ident in
-    parse tl (stmt :: stmts)
-  | { kind = IDENT ident } :: { kind = LPAREN } :: tl ->
-    let (args, rest) = parse_fun_args tl [] in
-    Printf.printf "parser - args len: %d\n" (List.length args);
-    (match rest with
-    | { kind = RIGHT_ARROW } :: tl ->
-      let (block_stmts, rest') = parse_block_statements tl in
-      let stmt = Func_st (ident, args, block_stmts) in
-      parse rest' (stmt :: stmts)
-    | _ -> failwith "Syntax error! Arrow expected")
+      (* | { kind = IDENT ident } :: { kind = LPAREN } :: { kind = RPAREN} :: tl -> *)
+      (* let stmt = Call_st ident in *)
+      (* parse tl (stmt :: stmts) *))
+  | { kind = IDENT ident } :: { kind = LPAREN } :: tl -> (
+      let args, rest = parse_fun_args tl [] in
+      Printf.printf "parser - args len: %d\n" (List.length args);
+      match rest with
+      | { kind = RIGHT_ARROW } :: tl ->
+          let block_stmts, rest' = parse_block_statements tl in
+          let stmt = Func_st (ident, args, block_stmts) in
+          parse rest' (stmt :: stmts)
+      | { kind = NEWLINE } :: tl ->
+          let stmt = Call_st ident in
+          parse tl (stmt :: stmts)
+      | _ -> failwith "Syntax error! Arrow expected")
   | token :: tl ->
       Printf.printf "Unknown token ";
       print_token token;

@@ -22,7 +22,7 @@ hello(Str) ->
   .print \"Hello funcyion!\"
   .
 
-test_func()
+test_func(Abc)
 hello()
 test_func()
 test_func()
