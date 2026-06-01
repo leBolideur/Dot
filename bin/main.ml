@@ -23,9 +23,9 @@ hello(Str) ->
   .
 
 Abc = 6.
-test_func(Abc)
+test_func(Abc + 4)
 hello(\"World\")
-test_func(Abc)
+test_func(Abc + 4 * 2)
 test_func(Abc)
 
 hello(\"World\")

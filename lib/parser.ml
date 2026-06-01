@@ -226,6 +226,8 @@ and parse tokens stmts =
           let stmt = Func_st (ident, params, block_stmts) in
           parse rest' (stmt :: stmts)
       | { kind = NEWLINE } :: tl ->
+          let args, _ = parse_fun_args between_paren [] in
+          Printf.printf "args in call - len: %d\n" (List.length args);
           let stmt = Call_st ident in
           parse tl (stmt :: stmts)
       | _ -> failwith "Syntax error! Arrow expected")
