@@ -22,12 +22,13 @@ hello(Str) ->
   .print \"Hello funcyion!\"
   .
 
+Abc = 6.
 test_func(Abc)
-hello()
-test_func()
-test_func()
+hello(\"World\")
+test_func(Abc)
+test_func(Abc)
 
-hello()
+hello(\"World\")
 
 .print \"========================================\"
 .print \"Tous les tests termines\"

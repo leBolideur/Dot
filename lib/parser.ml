@@ -133,15 +133,34 @@ let check_freeze tokens =
   | { kind = NEWLINE } :: tl -> (false, tl)
   | _ -> failwith "Expected . or newline"
 
+let rec parse_fun_params tokens acc =
+  Printf.printf "parse_params - tokens len: %d\n" (List.length tokens);
+  List.iter print_token tokens;
+  match tokens with
+  | [] -> (List.rev acc, [])
+  | { kind = RPAREN } :: tl -> (List.rev acc, tl)
+  | { kind = COMMA } :: tl -> parse_fun_params tl acc
+  | { kind = IDENT _ } :: _ | { kind = VAR _ } :: _ ->
+      let arg, rest = parse_expression tokens in
+      parse_fun_params rest (arg :: acc)
+  | _ -> failwith "Params must be IDENT or VAR"
+
 let rec parse_fun_args tokens acc =
+  match tokens with
+  | [] -> (List.rev acc, [])
+  | { kind = RPAREN } :: tl -> (List.rev acc, tl)
+  | { kind = COMMA } :: tl -> parse_fun_args tl acc
+  | { kind = IDENT _ } :: _ | { kind = VAR _ } :: _ | { kind = INT _ } :: _ | { kind = STR_LIT _ } :: _ ->
+      let arg, rest = parse_expression tokens in
+      parse_fun_args rest (arg :: acc)
+  | _ -> failwith "Args must be IDENT or VAR or Expression"
+
+let rec parse_until_rparen tokens acc =
   match tokens with
   | [] -> failwith "Syntax error on function args"
   | { kind = RPAREN } :: tl -> (List.rev acc, tl)
-  | { kind = COMMA } :: tl -> parse_fun_args tl acc
-  | { kind = IDENT _ } :: _ | { kind = VAR _ } :: _ ->
-      let arg, rest = parse_expression tokens in
-      parse_fun_args rest (arg :: acc)
-  | _ -> failwith "Args must be IDENT or VAR"
+  | { kind = COMMA } :: tl -> parse_until_rparen tl acc
+  | hd :: tl -> parse_until_rparen tl (hd :: acc)
 
 let rec parse_block_statements tokens =
   let { statements = stmts }, rest = parse tokens [] in
@@ -197,12 +216,14 @@ and parse tokens stmts =
       (* let stmt = Call_st ident in *)
       (* parse tl (stmt :: stmts) *))
   | { kind = IDENT ident } :: { kind = LPAREN } :: tl -> (
-      let args, rest = parse_fun_args tl [] in
-      Printf.printf "parser - args len: %d\n" (List.length args);
+      let (between_paren, rest) = parse_until_rparen tl [] in
+      Printf.printf "parser - between_paren len: %d\n" (List.length between_paren);
+      List.iter print_token between_paren;
       match rest with
       | { kind = RIGHT_ARROW } :: tl ->
+          let params, _ = parse_fun_params between_paren [] in
           let block_stmts, rest' = parse_block_statements tl in
-          let stmt = Func_st (ident, args, block_stmts) in
+          let stmt = Func_st (ident, params, block_stmts) in
           parse rest' (stmt :: stmts)
       | { kind = NEWLINE } :: tl ->
           let stmt = Call_st ident in
