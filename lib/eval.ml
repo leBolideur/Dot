@@ -131,23 +131,24 @@ let rec run program_stmts env =
       | _ ->
           let _ = run (List.rev alternative) (ScopeMarker :: env) in
           run tl env)
-  | Func_st (name, args, body) :: tl ->
-    let vfun = VFun (name, args, body, env) in
-    let entry = {
-        name;
-        freezed = false;
-        value = vfun;
-        history = [];
-    } in
-    run tl (Entry entry :: env)
-  | Call_st fun_name :: tl ->
-    let fun_ = find_in_local_env env fun_name in
-    (match fun_ with
-    | None -> failwith ("No function found with that name: " ^ fun_name)
-    | Some entry ->
-        (match entry.value with
-        | VFun (fname, args, fbody, fenv) when fname = fun_name ->
-            Printf.printf "Call_st args len: %d\n" (List.length args);
-            let _ = run (List.rev fbody) (fenv) in
-            run tl env
-        | _ -> failwith "Not a function!"))
+  | Func_st (name, params, body) :: tl ->
+      (* Printf.printf "Func_st params:\n"; *)
+      (* List.iter print_ast params; *)
+      (* print_endline ""; *)
+      let vfun = VFun (name, params, body, env) in
+      let entry = { name; freezed = false; value = vfun; history = [] } in
+      run tl (Entry entry :: env)
+  | Call_st (fun_name, args) :: tl -> (
+      (* Printf.printf "Call_st params:\n"; *)
+      (* List.iter print_ast args; *)
+      (* print_endline ""; *)
+      let fun_ = find_in_local_env env fun_name in
+      match fun_ with
+      | None -> failwith ("No function found with that name: " ^ fun_name)
+      | Some entry -> (
+          match entry.value with
+          | VFun (fname, fparams, fbody, fenv) when fname = fun_name ->
+              Printf.printf "Call_st args len: %d\tFunc_st params len: %d\n" (List.length args) (List.length fparams);
+              let _ = run (List.rev fbody) fenv in
+              run tl env
+          | _ -> failwith "Not a function!"))

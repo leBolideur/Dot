@@ -19,7 +19,7 @@ type statement =
   | Stmt_Builtin_st of string * string
   | If_st of ast * statement list * statement list
   | Func_st of string * ast list * statement list
-  | Call_st of string
+  | Call_st of string * ast list
 
 type program = { statements : statement list }
 
@@ -73,11 +73,10 @@ and parse_add_aux left rest =
 
 let rec print_ast ast =
   match ast with
-  (* | Int nb -> Printf.printf "%d" nb *)
   | IntLit number ->
       let number_str = string_of_int number in
       Printf.printf "%s" number_str
-  | StrLit str -> Printf.printf "%s" str
+  | StrLit str -> Printf.printf "StrLit %s" str
   | Ident name -> Printf.printf "Ident: %s" name
   | Var name -> Printf.printf "Var %s" name
   | Add (left, right) ->
@@ -134,8 +133,6 @@ let check_freeze tokens =
   | _ -> failwith "Expected . or newline"
 
 let rec parse_fun_params tokens acc =
-  Printf.printf "parse_params - tokens len: %d\n" (List.length tokens);
-  List.iter print_token tokens;
   match tokens with
   | [] -> (List.rev acc, [])
   | { kind = RPAREN } :: tl -> (List.rev acc, tl)
@@ -150,7 +147,10 @@ let rec parse_fun_args tokens acc =
   | [] -> (List.rev acc, [])
   | { kind = RPAREN } :: tl -> (List.rev acc, tl)
   | { kind = COMMA } :: tl -> parse_fun_args tl acc
-  | { kind = IDENT _ } :: _ | { kind = VAR _ } :: _ | { kind = INT _ } :: _ | { kind = STR_LIT _ } :: _ ->
+  | { kind = IDENT _ } :: _
+  | { kind = VAR _ } :: _
+  | { kind = INT _ } :: _
+  | { kind = STR_LIT _ } :: _ ->
       let arg, rest = parse_expression tokens in
       parse_fun_args rest (arg :: acc)
   | _ -> failwith "Args must be IDENT or VAR or Expression"
@@ -216,9 +216,10 @@ and parse tokens stmts =
       (* let stmt = Call_st ident in *)
       (* parse tl (stmt :: stmts) *))
   | { kind = IDENT ident } :: { kind = LPAREN } :: tl -> (
-      let (between_paren, rest) = parse_until_rparen tl [] in
-      Printf.printf "parser - between_paren len: %d\n" (List.length between_paren);
-      List.iter print_token between_paren;
+      let between_paren, rest = parse_until_rparen tl [] in
+      (* Printf.printf "parser - between_paren len: %d\n" *)
+      (* (List.length between_paren); *)
+      (* List.iter print_token between_paren; *)
       match rest with
       | { kind = RIGHT_ARROW } :: tl ->
           let params, _ = parse_fun_params between_paren [] in
@@ -227,8 +228,8 @@ and parse tokens stmts =
           parse rest' (stmt :: stmts)
       | { kind = NEWLINE } :: tl ->
           let args, _ = parse_fun_args between_paren [] in
-          Printf.printf "args in call - len: %d\n" (List.length args);
-          let stmt = Call_st ident in
+          (* Printf.printf "args in call - len: %d\n" (List.length args); *)
+          let stmt = Call_st (ident, args) in
           parse tl (stmt :: stmts)
       | _ -> failwith "Syntax error! Arrow expected")
   | token :: tl ->
