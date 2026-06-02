@@ -156,7 +156,8 @@ let rec run program_stmts env =
       (* Printf.printf "Call_st params:\n"; *)
       (* List.iter print_ast args; *)
       (* print_endline ""; *)
-      let fun_ = find_in_local_env env fun_name in
+   
+      let fun_ = find_in_env env fun_name in
       match fun_ with
       | None -> failwith ("No function found with that name: " ^ fun_name)
       | Some entry -> (
@@ -164,8 +165,15 @@ let rec run program_stmts env =
           | VFun (fname, fparams, fbody, _) when fname = fun_name ->
               (*Printf.printf "Call_st args len: %d\tFunc_st params len: %d\n" (List.length args) (List.length fparams);*)
               let parsed_args = eval_fun_args env fparams args [] in
+              let rec_entry = {
+                name = fname;
+                freezed = false;
+                value = VFun (fname, fparams, fbody, parsed_args);
+                history = []
+              } in
+              let rec_args = (Entry rec_entry) :: parsed_args in
               (*print_env parsed_args;*)
               (*Printf.printf "parsed_args len: %d\n" (List.length parsed_args);*)
-              let _ = run (List.rev fbody) parsed_args in
+              let _ = run (List.rev fbody) (rec_args) in
               run tl env
           | _ -> failwith "Not a function!"))

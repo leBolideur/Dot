@@ -27,6 +27,18 @@ add(Nb1, Nb2) ->
   .print Nb1 + Nb2
   .
 
+fact(N, Acc) ->
+  if N == 0
+    .print Acc
+    .
+  else
+    .print N
+    fact(N - 1, N * Acc)
+    .
+  .
+
+fact(5, 0)
+
 Abc = 6.
 add(Abc, 4)
 add(Abc, 10)
