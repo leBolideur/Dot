@@ -57,6 +57,20 @@ let rec print_stmts stmts =
       print_endline "Other stmt";
       print_stmts tl
 
+let rec eval_fun_args env params args acc = 
+    match (params, args) with
+    | ([], []) -> List.rev acc
+    | (hd :: tl, hd' :: tl') ->
+        let parsed = eval_ast hd' env in
+        let entry = {
+            name = hd;
+            freezed = false;
+            value = parsed;
+            history = []
+        } in
+        eval_fun_args env tl tl' (Entry entry :: acc)
+    | (_, _) -> failwith "Error on eval args"
+
 let rec run program_stmts env =
   match program_stmts with
   | [] -> env
@@ -147,8 +161,11 @@ let rec run program_stmts env =
       | None -> failwith ("No function found with that name: " ^ fun_name)
       | Some entry -> (
           match entry.value with
-          | VFun (fname, fparams, fbody, fenv) when fname = fun_name ->
-              Printf.printf "Call_st args len: %d\tFunc_st params len: %d\n" (List.length args) (List.length fparams);
-              let _ = run (List.rev fbody) fenv in
+          | VFun (fname, fparams, fbody, _) when fname = fun_name ->
+              (*Printf.printf "Call_st args len: %d\tFunc_st params len: %d\n" (List.length args) (List.length fparams);*)
+              let parsed_args = eval_fun_args env fparams args [] in
+              (*print_env parsed_args;*)
+              (*Printf.printf "parsed_args len: %d\n" (List.length parsed_args);*)
+              let _ = run (List.rev fbody) parsed_args in
               run tl env
           | _ -> failwith "Not a function!"))

@@ -5,7 +5,7 @@ type value =
   | VStr of string 
   | VIdent of string 
   | VBool of bool 
-  | VFun of string * ast list * statement list * env list 
+  | VFun of string * string list * statement list * env list 
   | VUnit
 
 and env_entry = {

@@ -18,7 +18,7 @@ type statement =
   | Expr_Builtin_st of string * ast
   | Stmt_Builtin_st of string * string
   | If_st of ast * statement list * statement list
-  | Func_st of string * ast list * statement list
+  | Func_st of string * string list * statement list
   | Call_st of string * ast list
 
 type program = { statements : statement list }
@@ -137,9 +137,9 @@ let rec parse_fun_params tokens acc =
   | [] -> (List.rev acc, [])
   | { kind = RPAREN } :: tl -> (List.rev acc, tl)
   | { kind = COMMA } :: tl -> parse_fun_params tl acc
-  | { kind = IDENT _ } :: _ | { kind = VAR _ } :: _ ->
-      let arg, rest = parse_expression tokens in
-      parse_fun_params rest (arg :: acc)
+  | { kind = IDENT a } :: tl | { kind = VAR a } :: tl ->
+      (*let arg, rest = parse_expression tokens in*)
+      parse_fun_params tl (a :: acc)
   | _ -> failwith "Params must be IDENT or VAR"
 
 let rec parse_fun_args tokens acc =

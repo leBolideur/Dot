@@ -19,16 +19,20 @@ test_func(Bar) ->
  .
 
 hello(Str) ->
-  .print \"Hello funcyion!\"
+  .print \"Hello \"
+  .print Str
+  .
+
+add(Nb1, Nb2) ->
+  .print Nb1 + Nb2
   .
 
 Abc = 6.
-test_func(Abc + 4)
-hello(\"World\")
-test_func(Abc + 4 * 2)
-test_func(Abc)
+add(Abc, 4)
+add(Abc, 10)
 
 hello(\"World\")
+hello(\"Maxime\")
 
 .print \"========================================\"
 .print \"Tous les tests termines\"
