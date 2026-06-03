@@ -55,9 +55,9 @@ hello(\"Maxime\")
   let tokens = Dot.Lexer.lex input state [] in
   (*List.iter print_token (List.rev tokens);*)
 
-  let ({ statements = stmts }, _) = Dot.Parser.parse (List.rev tokens) [] in
+  let ({ statements = stmts }, _) = Dot.Parser.parse tokens [] in
 
-  let _ = run (List.rev stmts) [] in
+  let _ = run stmts [] in
   (* print_env env; *)
 
   print_endline "\n\nso far, so good!"

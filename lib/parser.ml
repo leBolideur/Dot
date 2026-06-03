@@ -168,7 +168,7 @@ let rec parse_block_statements tokens =
 
 and parse tokens stmts =
   match tokens with
-  | [] -> ({ statements = stmts }, [])
+  | [] -> ({ statements = List.rev stmts }, [])
   | { kind = EOF } :: _ -> ({ statements = stmts }, [])
   | { kind = NEWLINE } :: tl -> parse tl stmts
   | { kind = EXPR_BUILTIN name } :: tl ->

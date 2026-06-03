@@ -72,12 +72,10 @@ let rec read_ident input state start =
   | Some ' ' | Some _ | None ->
       (state, String.sub input start (state.index - start))
 
-let rec read_builtin_name input state start = 
+let rec read_builtin_name input state start =
   match peek input state with
-  | Some 'a' .. 'z' -> 
-    read_builtin_name input (advance state) start
-  | Some _ | None ->
-    (state, String.sub input start (state.index - start))
+  | Some 'a' .. 'z' -> read_builtin_name input (advance state) start
+  | Some _ | None -> (state, String.sub input start (state.index - start))
 
 let is_next_builtin input state =
   match peek input (advance state) with Some 'a' .. 'z' -> true | _ -> false
@@ -119,13 +117,15 @@ let rec lex input state tokens =
       lex input
         { index = state.index + 1; line = state.line + 1 }
         (token :: tokens)
-  | Some '.' when is_next_builtin input state ->
+  | Some '.' when is_next_builtin input state -> (
       (* Consume the dot *)
       let advanced_state = advance state in
-      let state, builtin_name = read_builtin_name input advanced_state advanced_state.index in
-      (match if_builtin_get_token builtin_name with
-        | Some token -> lex input (advance state) (token :: tokens)
-        | None -> failwith "Unknown builtin!")
+      let state, builtin_name =
+        read_builtin_name input advanced_state advanced_state.index
+      in
+      match if_builtin_get_token builtin_name with
+      | Some token -> lex input (advance state) (token :: tokens)
+      | None -> failwith "Unknown builtin!")
   | Some '.' ->
       let token = { kind = DOT } in
       lex input (advance state) (token :: tokens)
@@ -135,14 +135,13 @@ let rec lex input state tokens =
   | Some 'a' .. 'z' -> (
       let state, result = read_ident input state state.index in
       match if_keyword_get_token result with
-      | Some token ->
-          lex input state (token :: tokens)
+      | Some token -> lex input state (token :: tokens)
       | None -> (
           match if_builtin_get_token result with
           | Some token -> lex input state (token :: tokens)
           | _ ->
-            let token = { kind = IDENT result } in
-            lex input state (token :: tokens)))
+              let token = { kind = IDENT result } in
+              lex input state (token :: tokens)))
   | Some 'A' .. 'Z' ->
       let state, result = read_ident input state state.index in
       let token = { kind = VAR result } in
@@ -206,5 +205,5 @@ let rec lex input state tokens =
       lex input (advance state) (token :: tokens)
   | None ->
       let token = { kind = EOF } in
-      token :: tokens
+      List.rev (token :: tokens)
   | _ -> lex input (advance state) tokens
