@@ -53,6 +53,13 @@ let rec print_stmts stmts =
       Printf.printf "Expr_Builtin_st -> name = %s\n\tast:\n\t" name;
       print_ast ast;
       print_stmts tl
+  | Func_st (name, params, stmts) :: tl ->
+      Printf.printf "Func_st -> name = %s\n\tparams len: %d\tstmts len: %d\n" name (List.length params) (List.length stmts);
+      print_stmts tl
+  | Call_st (name, args) :: tl ->
+      Printf.printf "Call_st -> name = %s\n\targs len: %d\n\tast:\n\t" name (List.length args);
+      List.iter print_ast args;
+      print_stmts tl
   | _ :: tl ->
       print_endline "Other stmt";
       print_stmts tl
@@ -74,8 +81,7 @@ let rec run_list program_stmts env =
   | last :: [] -> process_stmt last env
   | hd :: tl ->
       let _, env_inter = process_stmt hd env in
-      run_list
-     tl env_inter
+      run_list tl env_inter
 
 and process_stmt stmt env =
   match stmt with
@@ -149,7 +155,7 @@ and process_stmt stmt env =
   | Func_st (name, params, body) ->
       let vfun = VFun (name, params, body, env) in
       let entry = { name; freezed = false; value = vfun; history = [] } in
-      run_list (List.rev body) (Entry entry :: env)
+      run_list (List.rev body) (Entry entry :: ScopeMarker :: env)
   | Call_st (fun_name, args) -> (
       let fun_ = find_in_env env fun_name in
       match fun_ with
@@ -167,5 +173,5 @@ and process_stmt stmt env =
                 }
               in
               let rec_args = Entry rec_entry :: parsed_args in
-              run_list (List.rev fbody) rec_args
+              run_list (List.rev fbody) (rec_args)
           | _ -> failwith "Not a function!"))

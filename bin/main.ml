@@ -7,21 +7,13 @@ let () =
   let state = { index = 0; line = 1 } in
 
   let input = "
-hello(Str) ->
-  .print \"Hello \"
-  .print Str
+add() ->
+  Nb1 = 666.
+  .print Nb1
   .
 
-add(Nb1, Nb2) ->
-  .print Nb1 + Nb2
-  .
-
-Abc = 6.
-add(Abc, 4)
-add(Abc, 10)
-
-hello(\"World\")
-hello(\"Maxime\")
+.print Nb1
+add()
 
 .print \"========================================\"
 .print \"Tous les tests termines\"
