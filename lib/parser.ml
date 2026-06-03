@@ -169,7 +169,7 @@ let rec parse_block_statements tokens =
 and parse tokens stmts =
   match tokens with
   | [] -> ({ statements = List.rev stmts }, [])
-  | { kind = EOF } :: _ -> ({ statements = stmts }, [])
+  | { kind = EOF } :: _ -> ({ statements = List.rev stmts }, [])
   | { kind = NEWLINE } :: tl -> parse tl stmts
   | { kind = EXPR_BUILTIN name } :: tl ->
       let node, rest = parse_expression tl in
@@ -209,17 +209,10 @@ and parse tokens stmts =
           | { kind = NEWLINE } :: tl'' ->
               let stmt = If_st (condition, if_stmts, []) in
               parse tl'' (stmt :: stmts)
-          (*| { kind = NEWLINE } :: _ -> failwith "Condition syntax error! Dot expected"*)
           | _ -> failwith "Condition syntax error!")
-      | _ -> failwith "Syntaxe error, newline expected"
-      (* | { kind = IDENT ident } :: { kind = LPAREN } :: { kind = RPAREN} :: tl -> *)
-      (* let stmt = Call_st ident in *)
-      (* parse tl (stmt :: stmts) *))
+      | _ -> failwith "Syntaxe error, newline expected")
   | { kind = IDENT ident } :: { kind = LPAREN } :: tl -> (
       let between_paren, rest = parse_until_rparen tl [] in
-      (* Printf.printf "parser - between_paren len: %d\n" *)
-      (* (List.length between_paren); *)
-      (* List.iter print_token between_paren; *)
       match rest with
       | { kind = RIGHT_ARROW } :: tl ->
           let params, _ = parse_fun_params between_paren [] in
@@ -228,7 +221,6 @@ and parse tokens stmts =
           parse rest' (stmt :: stmts)
       | { kind = NEWLINE } :: tl ->
           let args, _ = parse_fun_args between_paren [] in
-          (* Printf.printf "args in call - len: %d\n" (List.length args); *)
           let stmt = Call_st (ident, args) in
           parse tl (stmt :: stmts)
       | _ -> failwith "Syntax error! Arrow expected")

@@ -7,17 +7,6 @@ let () =
   let state = { index = 0; line = 1 } in
 
   let input = "
-test_func(Bar) ->
- Add = 1 + 5 
- Add.
- if Add == 3
-  .print Add
-  .
- else
-  .print \"Nooooot 3\"
-  .
- .
-
 hello(Str) ->
   .print \"Hello \"
   .print Str
@@ -26,18 +15,6 @@ hello(Str) ->
 add(Nb1, Nb2) ->
   .print Nb1 + Nb2
   .
-
-fact(N, Acc) ->
-  if N == 0
-    .print Acc
-    .
-  else
-    .print N
-    fact(N - 1, N * Acc)
-    .
-  .
-
-fact(5, 0)
 
 Abc = 6.
 add(Abc, 4)
@@ -55,9 +32,9 @@ hello(\"Maxime\")
   let tokens = Dot.Lexer.lex input state [] in
   (*List.iter print_token (List.rev tokens);*)
 
-  let ({ statements = stmts }, _) = Dot.Parser.parse tokens [] in
+  let (program, _) = Dot.Parser.parse tokens [] in
 
-  let _ = run stmts [] in
+  let (_, _) = run_list program.statements [] in
   (* print_env env; *)
 
   print_endline "\n\nso far, so good!"

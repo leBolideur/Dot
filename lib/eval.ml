@@ -68,21 +68,18 @@ let rec eval_fun_args env params args acc =
       eval_fun_args env tl tl' (Entry entry :: acc)
   | _, _ -> failwith "Error on eval args"
 
-let rec run program_stmts env =
+let rec run_list program_stmts env =
   match program_stmts with
   | [] -> (VUnit, env)
   | last :: [] -> process_stmt last env
   | hd :: tl ->
       let _, env_inter = process_stmt hd env in
-      run tl env_inter
+      run_list
+     tl env_inter
 
-and process_stmt program_stmts env =
-  match program_stmts with
-  | [] -> (VUnit, env)
-  | [ last ] ->
-      let ret_value, new_env = process_stmt [ last ] env in
-      (ret_value, new_env)
-  | Decl_st (var_name, ast, is_freezed) :: tl ->
+and process_stmt stmt env =
+  match stmt with
+  | Decl_st (var_name, ast, is_freezed) ->
       let new_env =
         match find_in_local_env env var_name with
         | None ->
@@ -102,8 +99,8 @@ and process_stmt program_stmts env =
             let new_env = replace_in_local_env env updated_var in
             new_env
       in
-      process_stmt tl new_env
-  | Freeze_st name :: tl ->
+      (VUnit, new_env)
+  | Freeze_st name ->
       let var_to_freeze =
         match find_in_local_env env name with
         | Some entry -> entry
@@ -112,21 +109,21 @@ and process_stmt program_stmts env =
       let new_var = { var_to_freeze with freezed = true } in
       let new_env = replace_in_local_env env new_var in
 
-      process_stmt tl (Entry new_var :: new_env)
-  | Expr_Builtin_st (name, ast) :: tl -> (
+      (VUnit, (Entry new_var :: new_env))
+  | Expr_Builtin_st (name, ast) -> (
       let node = eval_ast ast env in
       match (name, node) with
       | "print", VInt nb ->
           Printf.printf "%d\n" nb;
-          process_stmt tl env
+          (VUnit, env)
       | "print", VStr str ->
           Printf.printf "%s\n" str;
-          process_stmt tl env
+          (VUnit, env)
       | "print", VBool boolean ->
           Printf.printf "%b\n" boolean;
-          process_stmt tl env
+          (VUnit, env)
       | _ -> failwith "Unknown builtin")
-  | Stmt_Builtin_st (name, ident) :: tl -> (
+  | Stmt_Builtin_st (name, ident) -> (
       match (name, ident) with
       | "debug", var_name -> (
           let history = var_history_by_name env var_name in
@@ -134,43 +131,32 @@ and process_stmt program_stmts env =
           | None ->
               print_env env;
               Printf.printf ".debug > no history for %s\n" var_name;
-              process_stmt tl env
+              (VUnit, env)
           | Some hist ->
               Printf.printf ".debug > history len for %s : %d\n" var_name
                 (List.length hist);
               print_history var_name hist 0;
               Printf.printf "Is freezed? %b\n"
                 (is_var_name_freezed env var_name);
-              process_stmt tl env)
+              (VUnit, env))
       | _ -> failwith "Unknown builtin")
-  | Expr_st _ :: tl -> process_stmt tl env
-  | If_st (cond, consequence, alternative) :: tl -> (
+  | Expr_st expr -> (eval_ast expr env, env)
+  | If_st (cond, consequence, alternative) -> (
       let eval_cond = eval_ast cond env in
       match eval_cond with
-      | VBool true ->
-          let _ = process_stmt (List.rev consequence) (ScopeMarker :: env) in
-          process_stmt tl env
-      | _ ->
-          let _ = process_stmt (List.rev alternative) (ScopeMarker :: env) in
-          process_stmt tl env)
-  | Func_st (name, params, body) :: tl ->
-      (* Printf.printf "Func_st params:\n"; *)
-      (* List.iter print_ast params; *)
-      (* print_endline ""; *)
+      | VBool true -> run_list (List.rev consequence) (ScopeMarker :: env)
+      | _ -> run_list (List.rev alternative) (ScopeMarker :: env))
+  | Func_st (name, params, body) ->
       let vfun = VFun (name, params, body, env) in
       let entry = { name; freezed = false; value = vfun; history = [] } in
-      process_stmt tl (Entry entry :: env)
-  | Call_st (fun_name, args) :: tl -> (
-      (* Printf.printf "Call_st params:\n"; *)
-      (* List.iter print_ast args; *)
-      (* print_endline ""; *)
+      run_list (List.rev body) (Entry entry :: env)
+  | Call_st (fun_name, args) -> (
       let fun_ = find_in_env env fun_name in
       match fun_ with
       | None -> failwith ("No function found with that name: " ^ fun_name)
       | Some entry -> (
           match entry.value with
           | VFun (fname, fparams, fbody, _) when fname = fun_name ->
-              (*Printf.printf "Call_st args len: %d\tFunc_st params len: %d\n" (List.length args) (List.length fparams);*)
               let parsed_args = eval_fun_args env fparams args [] in
               let rec_entry =
                 {
@@ -181,8 +167,5 @@ and process_stmt program_stmts env =
                 }
               in
               let rec_args = Entry rec_entry :: parsed_args in
-              (*print_env parsed_args;*)
-              (*Printf.printf "parsed_args len: %d\n" (List.length parsed_args);*)
-              let _, new_env = process_stmt (List.rev fbody) rec_args in
-              process_stmt tl new_env
+              run_list (List.rev fbody) rec_args
           | _ -> failwith "Not a function!"))
