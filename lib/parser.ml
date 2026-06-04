@@ -39,8 +39,17 @@ let rec parse_primary tokens =
       print_token token;
       failwith "Fail parse_primary"
 
+and parse_call tokens = 
+  let parse, rest = parse_primary tokens in
+  match rest with
+  | [] -> failwith "Syntax error on parse_call"
+  | { kind = LPAREN } :: tl ->
+    let args, rest = parse_expression tl in
+    (Call_st ("funnnnn", args), tl)
+  | _ :: tl -> (Expr_st parse, tl)
+
 and parse_factor tokens =
-  let left, rest = parse_primary tokens in
+  let left, rest = parse_call tokens in
   parse_factor_aux left rest
 
 and parse_factor_aux left rest =
@@ -70,6 +79,18 @@ and parse_add_aux left rest =
       let node = Minus (left, right) in
       parse_add_aux node rest'
   | _ -> (left, rest)
+
+and parse_comparison tokens =
+  let left, rest = parse_add tokens in
+  match rest with
+  | { kind = EQ } :: tl ->
+      let right, rest' = parse_add tl in
+      (Eq (left, right), rest')
+  | _ -> (left, rest)
+
+and parse_expression tokens =
+  let ast, rest = parse_comparison tokens in
+  (ast, rest)
 
 let rec print_ast ast =
   match ast with
@@ -110,23 +131,14 @@ let rec print_ast ast =
       print_ast right;
       Printf.printf ")"
 
-let parse_comparison tokens =
-  let left, rest = parse_add tokens in
-  match rest with
-  | { kind = EQ } :: tl ->
-      let right, rest' = parse_add tl in
-      (Eq (left, right), rest')
-  | _ -> (left, rest)
 
-let parse_expression tokens =
-  let ast, rest = parse_comparison tokens in
-  (ast, rest)
 
 let parse_var_st name tokens =
   let _, rest = parse_expression tokens in
   (Var name, rest)
 
 let check_freeze tokens =
+    List.iter print_token tokens;
   match tokens with
   | { kind = DOT } :: tl -> (true, tl)
   | { kind = NEWLINE } :: tl -> (false, tl)
@@ -190,7 +202,7 @@ and parse tokens stmts =
       let stmt = Freeze_st name in
       parse tl (stmt :: stmts)
   | { kind = VAR name } :: tl ->
-      let stmt = Expr_st (Ident name) in
+      let stmt = Expr_st (Var name) in
       parse tl (stmt :: stmts)
   | { kind = INT _ } :: _ | { kind = LPAREN } :: _ ->
       let node, rest = parse_expression tokens in

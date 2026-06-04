@@ -45,13 +45,17 @@ let rec eval_ast ast env =
 
 let rec print_stmts stmts =
   match stmts with
-  | [] -> print_endline "End of stmts list"
+  | [] -> print_endline "\nEnd of stmts list"
   | Decl_st (name, _, freezed) :: tl ->
       Printf.printf "Decl_st -> name = %s\tfreezed = %b\n" name freezed;
       print_stmts tl
   | Expr_Builtin_st (name, ast) :: tl ->
       Printf.printf "Expr_Builtin_st -> name = %s\n\tast:\n\t" name;
       print_ast ast;
+      print_stmts tl
+  | Expr_st expr :: tl ->
+      Printf.printf "Expr_st -> ast:\n\t";
+      print_ast expr;
       print_stmts tl
   | Func_st (name, params, stmts) :: tl ->
       Printf.printf "Func_st -> name = %s\n\tparams len: %d\tstmts len: %d\n" name (List.length params) (List.length stmts);
@@ -78,9 +82,14 @@ let rec eval_fun_args env params args acc =
 let rec run_list program_stmts env =
   match program_stmts with
   | [] -> (VUnit, env)
-  | last :: [] -> process_stmt last env
+  | last :: [] -> 
+    let ret_value, ret_env = process_stmt last env in
+    (*let value = eval_ast ret_value env in*)
+    (*print_value ret_value;*)
+    (ret_value, ret_env)
   | hd :: tl ->
-      let _, env_inter = process_stmt hd env in
+      let ret_v, env_inter = process_stmt hd env in
+      print_value ret_v;
       run_list tl env_inter
 
 and process_stmt stmt env =
@@ -155,7 +164,8 @@ and process_stmt stmt env =
   | Func_st (name, params, body) ->
       let vfun = VFun (name, params, body, env) in
       let entry = { name; freezed = false; value = vfun; history = [] } in
-      run_list (List.rev body) (Entry entry :: ScopeMarker :: env)
+      let fenv = (Entry entry :: ScopeMarker :: env) in
+      (VUnit, fenv)
   | Call_st (fun_name, args) -> (
       let fun_ = find_in_env env fun_name in
       match fun_ with

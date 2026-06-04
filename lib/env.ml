@@ -17,6 +17,15 @@ and env_entry = {
 
 and env = Entry of env_entry | ScopeMarker
 
+let print_value value =
+  match value with
+  | VInt nb -> print_endline ("VInt: " ^ string_of_int nb)
+  | VStr str -> print_endline ("VStr: " ^ str)
+  | VIdent ident -> print_endline ("VIdent: " ^ ident)
+  | VBool _ -> print_endline ("VBool")
+  | VFun (_, _, _, _) -> print_endline "VFun"
+  | VUnit -> print_endline "VUnit"
+
 let rec print_env env =
   print_endline "\n-> Env:";
   match env with

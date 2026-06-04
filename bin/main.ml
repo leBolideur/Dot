@@ -7,18 +7,12 @@ let () =
   let state = { index = 0; line = 1 } in
 
   let input = "
-add() ->
-  Nb1 = 666.
-  .print Nb1
+add(Nb1, Nb2) ->
+  N = Nb1 + Nb2.
+  N
   .
 
-.print Nb1
-add()
-
-.print \"========================================\"
-.print \"Tous les tests termines\"
-.print \"Si vous voyez ce message, DotLang v0.1 est operationnel\"
-.print \"========================================\"
+Res = add(10, 5)
     "
   in
   let tokens = Dot.Lexer.lex input state [] in
@@ -26,7 +20,8 @@ add()
 
   let (program, _) = Dot.Parser.parse tokens [] in
 
-  let (_, _) = run_list program.statements [] in
+  let (ret_value, _) = run_list program.statements [] in
+  Dot.Env.print_value ret_value;
   (* print_env env; *)
 
   print_endline "\n\nso far, so good!"
