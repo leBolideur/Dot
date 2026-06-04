@@ -12,7 +12,8 @@ add(Nb1, Nb2) ->
   N
   .
 
-Res = add(10, 5)
+Res = add(10, 9)
+.print Res
     "
   in
   let tokens = Dot.Lexer.lex input state [] in
@@ -20,8 +21,8 @@ Res = add(10, 5)
 
   let (program, _) = Dot.Parser.parse tokens [] in
 
-  let (ret_value, _) = run_list program.statements [] in
-  Dot.Env.print_value ret_value;
+  let (_, _) = run_list program.statements [] in
+  (*Dot.Env.print_value ret_value;*)
   (* print_env env; *)
 
   print_endline "\n\nso far, so good!"

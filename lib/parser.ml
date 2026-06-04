@@ -41,15 +41,16 @@ let rec parse_primary tokens =
       failwith "Fail parse_primary"
 
 and parse_call tokens = 
-  let _, rest = parse_primary tokens in
-  List.iter print_token rest;
+  let expr, rest = parse_primary tokens in
   match rest with
   | [] -> failwith "Syntax error on parse_call"
   | { kind = LPAREN } :: tl ->
     let args, rest = parse_call_args tl in
-    (Call ("funnnnn", args), rest)
-  | _ -> failwith "faiiiil"
-
+    (match rest with
+    | { kind = RPAREN } :: tl -> (Call ("add", args), tl)
+    | _ -> failwith "missing RPAREN on call"
+    )
+  | _ -> (expr, rest)
 and parse_call_args tokens = 
   let first_args, rest = parse_expression tokens in
   match rest with
@@ -57,7 +58,7 @@ and parse_call_args tokens =
   | { kind = COMMA } :: tl ->
     let args, rest = parse_call_args tl in
     ((first_args :: args), rest)
-  | _ -> failwith "Error on parse_call_args"
+  | _ -> ([first_args], rest)
 
 and parse_factor tokens =
   let left, rest = parse_call tokens in
@@ -150,11 +151,11 @@ let parse_var_st name tokens =
   (Var name, rest)
 
 let check_freeze tokens =
-    List.iter print_token tokens;
   match tokens with
+  | [] -> failwith "ggg"
   | { kind = DOT } :: tl -> (true, tl)
   | { kind = NEWLINE } :: tl -> (false, tl)
-  | _ -> failwith "Expected . or newline"
+  | tok :: _ -> print_token tok; failwith "Expected . or newline"
 
 let rec parse_fun_params tokens acc =
   match tokens with
