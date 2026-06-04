@@ -5,6 +5,7 @@ type ast =
   | StrLit of string
   | Ident of string
   | Var of string
+  | Call of string * ast list
   | Add of ast * ast
   | Minus of ast * ast
   | Mul of ast * ast
@@ -40,13 +41,23 @@ let rec parse_primary tokens =
       failwith "Fail parse_primary"
 
 and parse_call tokens = 
-  let parse, rest = parse_primary tokens in
+  let _, rest = parse_primary tokens in
+  List.iter print_token rest;
   match rest with
   | [] -> failwith "Syntax error on parse_call"
   | { kind = LPAREN } :: tl ->
-    let args, rest = parse_expression tl in
-    (Call_st ("funnnnn", args), tl)
-  | _ :: tl -> (Expr_st parse, tl)
+    let args, rest = parse_call_args tl in
+    (Call ("funnnnn", args), rest)
+  | _ -> failwith "faiiiil"
+
+and parse_call_args tokens = 
+  let first_args, rest = parse_expression tokens in
+  match rest with
+  | [] -> failwith "Syntax error on parse_call_args"
+  | { kind = COMMA } :: tl ->
+    let args, rest = parse_call_args tl in
+    ((first_args :: args), rest)
+  | _ -> failwith "Error on parse_call_args"
 
 and parse_factor tokens =
   let left, rest = parse_call tokens in
@@ -100,6 +111,7 @@ let rec print_ast ast =
   | StrLit str -> Printf.printf "StrLit %s" str
   | Ident name -> Printf.printf "Ident: %s" name
   | Var name -> Printf.printf "Var %s" name
+  | Call (name, _) -> Printf.printf "Call %s" name
   | Add (left, right) ->
       Printf.printf "(";
       print_ast left;

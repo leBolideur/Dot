@@ -1,6 +1,31 @@
 open Parser
 open Env
 
+let rec print_stmts stmts =
+  match stmts with
+  | [] -> print_endline "\nEnd of stmts list"
+  | Decl_st (name, _, freezed) :: tl ->
+      Printf.printf "Decl_st -> name = %s\tfreezed = %b\n" name freezed;
+      print_stmts tl
+  | Expr_Builtin_st (name, ast) :: tl ->
+      Printf.printf "Expr_Builtin_st -> name = %s\n\tast:\n\t" name;
+      print_ast ast;
+      print_stmts tl
+  | Expr_st expr :: tl ->
+      Printf.printf "Expr_st -> ast:\n\t";
+      print_ast expr;
+      print_stmts tl
+  | Func_st (name, params, stmts) :: tl ->
+      Printf.printf "Func_st -> name = %s\n\tparams len: %d\tstmts len: %d\n" name (List.length params) (List.length stmts);
+      print_stmts tl
+  | Call_st (name, args) :: tl ->
+      Printf.printf "Call_st -> name = %s\n\targs len: %d\n\tast:\n\t" name (List.length args);
+      List.iter print_ast args;
+      print_stmts tl
+  | _ :: tl ->
+      print_endline "Other stmt";
+      print_stmts tl
+
 let rec eval_ast ast env =
   match ast with
   | IntLit nb -> VInt nb
@@ -12,6 +37,26 @@ let rec eval_ast ast env =
           Printf.printf "Unbound variable %s\n" name;
           failwith ""
       | Some entry -> entry.value)
+  | Call (name, args) -> (
+      let fun_ = find_in_env env name in
+      match fun_ with
+      | None -> failwith ("No function found with that name: " ^ name)
+      | Some entry -> (
+          match entry.value with
+          | VFun (fname, fparams, fbody, _) when fname = name ->
+              let parsed_args = eval_fun_args env fparams args [] in
+              let rec_entry =
+                {
+                  name = fname;
+                  freezed = false;
+                  value = VFun (fname, fparams, fbody, parsed_args);
+                  history = [];
+                }
+              in
+              let rec_args = Entry rec_entry :: parsed_args in
+              let ret, _ = run_list (List.rev fbody) (rec_args) in
+              ret
+          | _ -> failwith "Not a function!"))
   | Add (left, right) -> (
       let x = eval_ast left env in
       let y = eval_ast right env in
@@ -43,32 +88,7 @@ let rec eval_ast ast env =
       | VInt a, VInt b -> VBool (a == b)
       | _ -> failwith "Type mismatch for operator ==")
 
-let rec print_stmts stmts =
-  match stmts with
-  | [] -> print_endline "\nEnd of stmts list"
-  | Decl_st (name, _, freezed) :: tl ->
-      Printf.printf "Decl_st -> name = %s\tfreezed = %b\n" name freezed;
-      print_stmts tl
-  | Expr_Builtin_st (name, ast) :: tl ->
-      Printf.printf "Expr_Builtin_st -> name = %s\n\tast:\n\t" name;
-      print_ast ast;
-      print_stmts tl
-  | Expr_st expr :: tl ->
-      Printf.printf "Expr_st -> ast:\n\t";
-      print_ast expr;
-      print_stmts tl
-  | Func_st (name, params, stmts) :: tl ->
-      Printf.printf "Func_st -> name = %s\n\tparams len: %d\tstmts len: %d\n" name (List.length params) (List.length stmts);
-      print_stmts tl
-  | Call_st (name, args) :: tl ->
-      Printf.printf "Call_st -> name = %s\n\targs len: %d\n\tast:\n\t" name (List.length args);
-      List.iter print_ast args;
-      print_stmts tl
-  | _ :: tl ->
-      print_endline "Other stmt";
-      print_stmts tl
-
-let rec eval_fun_args env params args acc =
+and eval_fun_args env params args acc =
   match (params, args) with
   | [], [] -> List.rev acc
   | hd :: tl, hd' :: tl' ->
@@ -79,7 +99,7 @@ let rec eval_fun_args env params args acc =
       eval_fun_args env tl tl' (Entry entry :: acc)
   | _, _ -> failwith "Error on eval args"
 
-let rec run_list program_stmts env =
+and run_list program_stmts env =
   match program_stmts with
   | [] -> (VUnit, env)
   | last :: [] -> 

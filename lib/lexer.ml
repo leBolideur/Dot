@@ -58,7 +58,7 @@ let print_token token =
   | ELSE -> print_endline "ELSE"
   | RIGHT_ARROW -> print_endline "RIGHT_ARROW"
   | COMMA -> print_endline "COMMA"
-  | EOF -> print_endline "EOF - So far so good!"
+  | EOF -> print_endline "EOF"
 
 let peek input state =
   if state.index >= String.length input then None else Some input.[state.index]
