@@ -12,8 +12,15 @@ add(Nb1, Nb2) ->
   N
   .
 
+hello(Name) ->
+  .print \"Hello \"
+  .print Name
+  .
+
 Res = add(10, 9)
 .print Res
+
+hello(\"Maxime\")
     "
   in
   let tokens = Dot.Lexer.lex input state [] in
@@ -22,7 +29,10 @@ Res = add(10, 9)
   let (program, _) = Dot.Parser.parse tokens [] in
 
   let (_, _) = run_list program.statements [] in
-  (*Dot.Env.print_value ret_value;*)
+  (*print_endline "stmts:";
+  print_stmts program.statements;
+  print_endline "endddd";
+  Dot.Env.print_value ret_value;*)
   (* print_env env; *)
 
   print_endline "\n\nso far, so good!"

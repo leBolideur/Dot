@@ -43,14 +43,14 @@ let rec parse_primary tokens =
 and parse_call tokens = 
   let expr, rest = parse_primary tokens in
   match rest with
-  | [] -> failwith "Syntax error on parse_call"
-  | { kind = LPAREN } :: tl ->
+  | { kind = IDENT fname} :: { kind = LPAREN } :: tl ->
     let args, rest = parse_call_args tl in
     (match rest with
-    | { kind = RPAREN } :: tl -> (Call ("add", args), tl)
+    | { kind = RPAREN } :: tl -> (Call (fname, args), tl)
     | _ -> failwith "missing RPAREN on call"
     )
   | _ -> (expr, rest)
+
 and parse_call_args tokens = 
   let first_args, rest = parse_expression tokens in
   match rest with
@@ -152,7 +152,7 @@ let parse_var_st name tokens =
 
 let check_freeze tokens =
   match tokens with
-  | [] -> failwith "ggg"
+  | [] -> failwith "Syntax error on check_freeze"
   | { kind = DOT } :: tl -> (true, tl)
   | { kind = NEWLINE } :: tl -> (false, tl)
   | tok :: _ -> print_token tok; failwith "Expected . or newline"
@@ -208,9 +208,14 @@ and parse tokens stmts =
       ({ statements = stmts }, tl)
   | { kind = VAR name } :: { kind = ASSIGN } :: tl ->
       let node, rest = parse_expression tl in
-      let to_freeze, rest' = check_freeze rest in
-      let stmt = Decl_st (name, node, to_freeze) in
-      parse rest' (stmt :: stmts)
+      (match rest with
+      | { kind = LPAREN } :: tl -> 
+        let stmt = Decl_st (name, node, false) in
+        parse tl (stmt :: stmts)
+      | _ -> 
+        let to_freeze, rest' = check_freeze rest in
+        let stmt = Decl_st (name, node, to_freeze) in
+        parse rest' (stmt :: stmts))
   | { kind = VAR name } :: { kind = DOT } :: tl ->
       let stmt = Freeze_st name in
       parse tl (stmt :: stmts)

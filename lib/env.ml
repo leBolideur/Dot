@@ -23,7 +23,7 @@ let print_value value =
   | VStr str -> print_endline ("VStr: " ^ str)
   | VIdent ident -> print_endline ("VIdent: " ^ ident)
   | VBool _ -> print_endline ("VBool")
-  | VFun (_, _, _, _) -> print_endline "VFun"
+  | VFun (name, _, _, _) -> print_endline ("VFun - name: " ^ name)
   | VUnit -> print_endline "VUnit"
 
 let rec print_env env =

@@ -55,6 +55,8 @@ let rec eval_ast ast env =
               in
               let rec_args = Entry rec_entry :: parsed_args in
               let ret, _ = run_list (List.rev fbody) (rec_args) in
+              print_endline "ret value:";
+              print_value ret;
               ret
           | _ -> failwith "Not a function!"))
   | Add (left, right) -> (
@@ -108,8 +110,8 @@ and run_list program_stmts env =
     (*print_value ret_value;*)
     (ret_value, ret_env)
   | hd :: tl ->
-      let ret_v, env_inter = process_stmt hd env in
-      print_value ret_v;
+      let _, env_inter = process_stmt hd env in
+      (*print_value ret_v;*)
       run_list tl env_inter
 
 and process_stmt stmt env =
@@ -149,15 +151,24 @@ and process_stmt stmt env =
       let node = eval_ast ast env in
       match (name, node) with
       | "print", VInt nb ->
-          Printf.printf "%d\n" nb;
+          Printf.printf "%d" nb;
           (VUnit, env)
       | "print", VStr str ->
-          Printf.printf "%s\n" str;
+          Printf.printf "%s" str;
           (VUnit, env)
       | "print", VBool boolean ->
-          Printf.printf "%b\n" boolean;
+          Printf.printf "%b" boolean;
           (VUnit, env)
-      | _ -> failwith "Unknown builtin")
+      | "print", VIdent ident ->
+        let value = find_in_env env ident in
+        (match value with
+        | Some v -> 
+            print_value v.value;
+             (VUnit, env)
+        | _ -> 
+            failwith "Not able to print this type")
+           
+      | _ -> failwith "Unknown print builtin")
   | Stmt_Builtin_st (name, ident) -> (
       match (name, ident) with
       | "debug", var_name -> (
@@ -174,7 +185,7 @@ and process_stmt stmt env =
               Printf.printf "Is freezed? %b\n"
                 (is_var_name_freezed env var_name);
               (VUnit, env))
-      | _ -> failwith "Unknown builtin")
+      | _ -> failwith "Unknown debug builtin")
   | Expr_st expr -> (eval_ast expr env, env)
   | If_st (cond, consequence, alternative) -> (
       let eval_cond = eval_ast cond env in
