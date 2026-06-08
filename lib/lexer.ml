@@ -30,36 +30,6 @@ type token_type =
 type token = { kind : token_type }
 type state = { index : int; line : int }
 
-let print_token token =
-  match token.kind with
-  | INT nb -> Printf.printf "INT : %d\n" nb
-  | IDENT ident -> Printf.printf "IDENT : %s\n" ident
-  | VAR name -> Printf.printf "VAR : %s\n" name
-  | STR_LIT str -> Printf.printf "STR_LIT : %s\n" str
-  | EXPR_BUILTIN name -> Printf.printf "EXPR_BUILTIN : %s\n" name
-  | STMT_BUILTIN name -> Printf.printf "STMT_BUILTIN : %s\n" name
-  | DOT -> print_endline "DOT ."
-  | ASSIGN -> print_endline "ASSIGN"
-  | EQ -> print_endline "EQ"
-  | GT -> print_endline "GT"
-  | GTE -> print_endline "GTE"
-  | LT -> print_endline "LT"
-  | LTE -> print_endline "LTE"
-  | BANG -> print_endline "BANG"
-  | STAR -> print_endline "STAR"
-  | PLUS -> print_endline "PLUS"
-  | MINUS -> print_endline "MINUS"
-  | DIV -> print_endline "DIV"
-  | LPAREN -> print_endline "LPAREN"
-  | RPAREN -> print_endline "RPAREN"
-  | DIFF -> print_endline "DIFF"
-  | NEWLINE -> print_endline "NEWLINE"
-  | IF -> print_endline "IF"
-  | ELSE -> print_endline "ELSE"
-  | RIGHT_ARROW -> print_endline "RIGHT_ARROW"
-  | COMMA -> print_endline "COMMA"
-  | EOF -> print_endline "EOF"
-
 let peek input state =
   if state.index >= String.length input then None else Some input.[state.index]
 

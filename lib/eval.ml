@@ -1,30 +1,14 @@
 open Parser
 open Env
 
-let rec print_stmts stmts =
-  match stmts with
-  | [] -> print_endline "\nEnd of stmts list"
-  | Decl_st (name, _, freezed) :: tl ->
-      Printf.printf "Decl_st -> name = %s\tfreezed = %b\n" name freezed;
-      print_stmts tl
-  | Expr_Builtin_st (name, ast) :: tl ->
-      Printf.printf "Expr_Builtin_st -> name = %s\n\tast:\n\t" name;
-      print_ast ast;
-      print_stmts tl
-  | Expr_st expr :: tl ->
-      Printf.printf "Expr_st -> ast:\n\t";
-      print_ast expr;
-      print_stmts tl
-  | Func_st (name, params, stmts) :: tl ->
-      Printf.printf "Func_st -> name = %s\n\tparams len: %d\tstmts len: %d\n" name (List.length params) (List.length stmts);
-      print_stmts tl
-  | Call_st (name, args) :: tl ->
-      Printf.printf "Call_st -> name = %s\n\targs len: %d\n\tast:\n\t" name (List.length args);
-      List.iter print_ast args;
-      print_stmts tl
-  | _ :: tl ->
-      print_endline "Other stmt";
-      print_stmts tl
+let print_value value =
+  match value with
+  | VInt nb -> print_endline ("VInt: " ^ string_of_int nb)
+  | VStr str -> print_endline ("VStr: " ^ str)
+  | VIdent ident -> print_endline ("VIdent: " ^ ident)
+  | VBool _ -> print_endline ("VBool")
+  | VFun (name, _, _, _) -> print_endline ("VFun - name: " ^ name)
+  | VUnit -> print_endline "VUnit"
 
 let rec eval_ast ast env =
   match ast with

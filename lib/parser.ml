@@ -1,4 +1,5 @@
 open Lexer
+open Debug
 
 type ast =
   | IntLit of int
@@ -34,22 +35,21 @@ let rec parse_primary tokens =
   | { kind = LPAREN } :: tl -> (
       let right, rest = parse_add tl in
       match rest with
+      | [] -> (right, rest)
       | { kind = RPAREN } :: tl' -> (right, tl')
-      | _ -> failwith "Missing RPAREN on parse_primary")
-  | token :: _ ->
-      print_token token;
+      | tok :: _ -> print_token tok; failwith "Missing RPAREN on parse_primary")
+  | _ :: _ ->
+      (*print_token token; *)
       failwith "Fail parse_primary"
 
 and parse_call tokens = 
   let expr, rest = parse_primary tokens in
   match rest with
+  | [] -> failwith "Error on parse_call"
   | { kind = IDENT fname} :: { kind = LPAREN } :: tl ->
     let args, rest = parse_call_args tl in
-    (match rest with
-    | { kind = RPAREN } :: tl -> (Call (fname, args), tl)
-    | _ -> failwith "missing RPAREN on call"
-    )
-  | _ -> (expr, rest)
+    (Call (fname, args), rest)
+  | _ :: tl -> (expr, tl)
 
 and parse_call_args tokens = 
   let first_args, rest = parse_expression tokens in
@@ -58,7 +58,7 @@ and parse_call_args tokens =
   | { kind = COMMA } :: tl ->
     let args, rest = parse_call_args tl in
     ((first_args :: args), rest)
-  | _ -> ([first_args], rest)
+  | _ :: tl -> ([first_args], tl)
 
 and parse_factor tokens =
   let left, rest = parse_call tokens in
@@ -104,48 +104,6 @@ and parse_expression tokens =
   let ast, rest = parse_comparison tokens in
   (ast, rest)
 
-let rec print_ast ast =
-  match ast with
-  | IntLit number ->
-      let number_str = string_of_int number in
-      Printf.printf "%s" number_str
-  | StrLit str -> Printf.printf "StrLit %s" str
-  | Ident name -> Printf.printf "Ident: %s" name
-  | Var name -> Printf.printf "Var %s" name
-  | Call (name, _) -> Printf.printf "Call %s" name
-  | Add (left, right) ->
-      Printf.printf "(";
-      print_ast left;
-      Printf.printf " + ";
-      print_ast right;
-      Printf.printf ")"
-  | Minus (left, right) ->
-      Printf.printf "(";
-      print_ast left;
-      Printf.printf " - ";
-      print_ast right;
-      Printf.printf ")"
-  | Mul (left, right) ->
-      Printf.printf "(";
-      print_ast left;
-      Printf.printf " * ";
-      print_ast right;
-      Printf.printf ")"
-  | Div (left, right) ->
-      Printf.printf "(";
-      print_ast left;
-      Printf.printf " / ";
-      print_ast right;
-      Printf.printf ")"
-  | Eq (left, right) ->
-      Printf.printf "(";
-      print_ast left;
-      Printf.printf " == ";
-      print_ast right;
-      Printf.printf ")"
-
-
-
 let parse_var_st name tokens =
   let _, rest = parse_expression tokens in
   (Var name, rest)
@@ -155,7 +113,7 @@ let check_freeze tokens =
   | [] -> failwith "Syntax error on check_freeze"
   | { kind = DOT } :: tl -> (true, tl)
   | { kind = NEWLINE } :: tl -> (false, tl)
-  | tok :: _ -> print_token tok; failwith "Expected . or newline"
+  | _ :: _ -> failwith "Expected . or newline"
 
 let rec parse_fun_params tokens acc =
   match tokens with
@@ -170,14 +128,10 @@ let rec parse_fun_args tokens acc =
   | [] -> (List.rev acc, [])
   | { kind = RPAREN } :: tl -> (List.rev acc, tl)
   | { kind = COMMA } :: tl -> parse_fun_args tl acc
-  | { kind = IDENT _ } :: _
-  | { kind = VAR _ } :: _
-  | { kind = INT _ } :: _
-  | { kind = STR_LIT _ } :: _ ->
+  | _ :: _ ->
       let arg, rest = parse_expression tokens in
       parse_fun_args rest (arg :: acc)
-  | _ -> failwith "Args must be IDENT or VAR or Expression"
-
+  
 let rec parse_until_rparen tokens acc =
   match tokens with
   | [] -> failwith "Syntax error on function args"
@@ -225,35 +179,39 @@ and parse tokens stmts =
       let node, rest = parse_expression tokens in
       let stmt = Expr_st node in
       parse rest (stmt :: stmts)
-  | { kind = IF } :: tl -> (
-      let condition, rest = parse_expression tl in
-      match rest with
-      | { kind = NEWLINE } :: tl -> (
-          let if_stmts, rest' = parse_block_statements tl in
-          match rest' with
-          | { kind = NEWLINE } :: { kind = ELSE } :: tl' ->
-              let else_stmts, rest'' = parse_block_statements tl' in
-              let stmt = If_st (condition, if_stmts, else_stmts) in
-              parse rest'' (stmt :: stmts)
-          | { kind = NEWLINE } :: tl'' ->
-              let stmt = If_st (condition, if_stmts, []) in
-              parse tl'' (stmt :: stmts)
-          | _ -> failwith "Condition syntax error!")
-      | _ -> failwith "Syntaxe error, newline expected")
-  | { kind = IDENT ident } :: { kind = LPAREN } :: tl -> (
-      let between_paren, rest = parse_until_rparen tl [] in
-      match rest with
-      | { kind = RIGHT_ARROW } :: tl ->
-          let params, _ = parse_fun_params between_paren [] in
-          let block_stmts, rest' = parse_block_statements tl in
-          let stmt = Func_st (ident, params, block_stmts) in
-          parse rest' (stmt :: stmts)
-      | { kind = NEWLINE } :: tl ->
-          let args, _ = parse_fun_args between_paren [] in
-          let stmt = Call_st (ident, args) in
-          parse tl (stmt :: stmts)
-      | _ -> failwith "Syntax error! Arrow expected")
-  | token :: tl ->
+  | { kind = IF } :: tl -> parse_if tl stmts
+  | { kind = IDENT ident } :: { kind = LPAREN } :: tl -> parse_func_or_call ident tl stmts
+  | _ :: tl ->
       Printf.printf "Unknown token ";
-      print_token token;
+      (*print_token token; *)
       parse tl stmts
+
+and parse_if tokens stmts =
+  let condition, rest = parse_expression tokens in
+  match rest with
+  | { kind = NEWLINE } :: tl -> (
+      let if_stmts, rest' = parse_block_statements tl in
+      match rest' with
+      | { kind = NEWLINE } :: { kind = ELSE } :: tl' ->
+          let else_stmts, rest'' = parse_block_statements tl' in
+          let stmt = If_st (condition, if_stmts, else_stmts) in
+          parse rest'' (stmt :: stmts)
+      | { kind = NEWLINE } :: tl'' ->
+          let stmt = If_st (condition, if_stmts, []) in
+          parse tl'' (stmt :: stmts)
+      | _ -> failwith "Condition syntax error!")
+  | _ -> failwith "Syntaxe error, newline expected"
+
+and parse_func_or_call ident tokens stmts = 
+  let between_paren, rest = parse_until_rparen tokens [] in
+  match rest with
+  | { kind = RIGHT_ARROW } :: tl ->
+      let params, _ = parse_fun_params between_paren [] in
+      let block_stmts, rest' = parse_block_statements tl in
+      let stmt = Func_st (ident, params, block_stmts) in
+      parse rest' (stmt :: stmts)
+  | { kind = NEWLINE } :: tl ->
+      let args, _ = parse_fun_args between_paren [] in
+      let stmt = Call_st (ident, args) in
+      parse tl (stmt :: stmts)
+  | _ -> failwith "Syntax error! Arrow expected"
