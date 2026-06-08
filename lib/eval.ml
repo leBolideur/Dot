@@ -146,13 +146,13 @@ and process_stmt stmt env =
       let node = eval_ast ast env in
       match (name, node) with
       | "print", VInt nb ->
-          Printf.printf "%d" nb;
+          Printf.printf "%d\n" nb;
           (VUnit, env)
       | "print", VStr str ->
-          Printf.printf "%s" str;
+          Printf.printf "%s\n" str;
           (VUnit, env)
       | "print", VBool boolean ->
-          Printf.printf "%b" boolean;
+          Printf.printf "%b\n" boolean;
           (VUnit, env)
       | "print", VIdent ident ->
         let value = find_in_env env ident in
