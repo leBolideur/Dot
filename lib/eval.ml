@@ -55,8 +55,6 @@ let rec eval_ast ast env =
               in
               let rec_args = Entry rec_entry :: parsed_args in
               let ret, _ = run_list (List.rev fbody) (rec_args) in
-              print_endline "ret value:";
-              print_value ret;
               ret
           | _ -> failwith "Not a function!"))
   | Add (left, right) -> (
@@ -101,17 +99,14 @@ and eval_fun_args env params args acc =
       eval_fun_args env tl tl' (Entry entry :: acc)
   | _, _ -> failwith "Error on eval args"
 
-and run_list program_stmts env =
-  match program_stmts with
+and run_list stmts env =
+  match stmts with
   | [] -> (VUnit, env)
   | last :: [] -> 
     let ret_value, ret_env = process_stmt last env in
-    (*let value = eval_ast ret_value env in*)
-    (*print_value ret_value;*)
     (ret_value, ret_env)
   | hd :: tl ->
       let _, env_inter = process_stmt hd env in
-      (*print_value ret_v;*)
       run_list tl env_inter
 
 and process_stmt stmt env =

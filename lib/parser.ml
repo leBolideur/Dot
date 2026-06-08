@@ -35,7 +35,7 @@ let rec parse_primary tokens =
       let right, rest = parse_add tl in
       match rest with
       | { kind = RPAREN } :: tl' -> (right, tl')
-      | _ -> failwith "Missing RPAREN")
+      | _ -> failwith "Missing RPAREN on parse_primary")
   | token :: _ ->
       print_token token;
       failwith "Fail parse_primary"
@@ -162,9 +162,7 @@ let rec parse_fun_params tokens acc =
   | [] -> (List.rev acc, [])
   | { kind = RPAREN } :: tl -> (List.rev acc, tl)
   | { kind = COMMA } :: tl -> parse_fun_params tl acc
-  | { kind = IDENT a } :: tl | { kind = VAR a } :: tl ->
-      (*let arg, rest = parse_expression tokens in*)
-      parse_fun_params tl (a :: acc)
+  | { kind = IDENT a } :: tl | { kind = VAR a } :: tl -> parse_fun_params tl (a :: acc)
   | _ -> failwith "Params must be IDENT or VAR"
 
 let rec parse_fun_args tokens acc =
@@ -206,16 +204,17 @@ and parse tokens stmts =
   | { kind = DOT } :: tl ->
       (* End of block*)
       ({ statements = stmts }, tl)
+  | { kind = VAR name } :: { kind = ASSIGN } :: { kind = IDENT ident } :: { kind = LPAREN } :: tl ->
+      let between_paren, rest = parse_until_rparen tl [] in
+      let args, _ = parse_fun_args between_paren [] in
+      let call = Call (ident, args) in
+      let stmt = Decl_st (name, call, false) in
+      parse rest (stmt :: stmts)
   | { kind = VAR name } :: { kind = ASSIGN } :: tl ->
       let node, rest = parse_expression tl in
-      (match rest with
-      | { kind = LPAREN } :: tl -> 
-        let stmt = Decl_st (name, node, false) in
-        parse tl (stmt :: stmts)
-      | _ -> 
-        let to_freeze, rest' = check_freeze rest in
-        let stmt = Decl_st (name, node, to_freeze) in
-        parse rest' (stmt :: stmts))
+      let to_freeze, rest' = check_freeze rest in
+      let stmt = Decl_st (name, node, to_freeze) in
+      parse rest' (stmt :: stmts)
   | { kind = VAR name } :: { kind = DOT } :: tl ->
       let stmt = Freeze_st name in
       parse tl (stmt :: stmts)

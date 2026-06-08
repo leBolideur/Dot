@@ -8,20 +8,13 @@ let () =
 
   let input = "
 add(Nb1, Nb2) ->
-  N = Nb1 + Nb2.
-  N
-  .
-
-hello(Name) ->
-  .print \"Hello \"
-  .print Name
+  Res = Nb1 + Nb2
+  Res
   .
 
 Res = add(10, 9)
 .print Res
-
-hello(\"Maxime\")
-    "
+"
   in
   let tokens = Dot.Lexer.lex input state [] in
   (*List.iter print_token (List.rev tokens);*)
