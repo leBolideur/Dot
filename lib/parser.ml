@@ -31,11 +31,12 @@ let rec parse_primary tokens =
   | { kind = STR_LIT str } :: tl -> (StrLit str, tl)
   | { kind = IDENT name } :: tl -> (Ident name, tl)
   | { kind = VAR name } :: tl -> (Var name, tl)
-  | { kind = LPAREN } :: tl -> (
+  | { kind = LPAREN } :: tl -> 
       let right, rest = parse_add tl in
-      match rest with
+      (right, rest)
+      (*match rest with
       | { kind = RPAREN } :: tl' -> (right, tl')
-      | _ -> failwith "Missing RPAREN on parse_primary")
+      | _ -> failwith "Missing RPAREN on parse_primary")*)
   | token :: _ ->
       print_token token;
       failwith "Fail parse_primary"
@@ -170,13 +171,9 @@ let rec parse_fun_args tokens acc =
   | [] -> (List.rev acc, [])
   | { kind = RPAREN } :: tl -> (List.rev acc, tl)
   | { kind = COMMA } :: tl -> parse_fun_args tl acc
-  | { kind = IDENT _ } :: _
-  | { kind = VAR _ } :: _
-  | { kind = INT _ } :: _
-  | { kind = STR_LIT _ } :: _ ->
-      let arg, rest = parse_expression tokens in
-      parse_fun_args rest (arg :: acc)
-  | _ -> failwith "Args must be IDENT or VAR or Expression"
+  | _ :: _ ->
+    let arg, rest = parse_expression tokens in
+    parse_fun_args rest (arg :: acc)
 
 let rec parse_until_rparen tokens acc =
   match tokens with

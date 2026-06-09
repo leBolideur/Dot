@@ -17,45 +17,10 @@ mul(Nb1, Nb2) ->
   Res
   .
 
-hello(Name) ->
-  .print \"Hello \"
-  .print Name
-  .
-
-Res = add(mul(10, 2), 9)
+Res = mul(10, 2)
 .print Res
-Res2 = add(10, 50)
+Res2 = add(Res, 50)
 .print Res2
-
-hello(\"Max\")
-
-
-
-loop(Count) ->
-  if Count == 0
-    .
-  else
-    .print \"Hello count\"
-    loop(Count - 1)
-  .
-.
-
-loop(10)
-
-fact(N) ->
-  if N == 0
-    .print \"ifffff\"
-    (1)
-    .
-  else
-    .print \"elseeeeee\"
-    N * fact(N - 1)
-  .
-.
-
-Fact = fact(5)
-.print \"Fact: \"
-.print Fact
 "
   in
   let tokens = Dot.Lexer.lex input state [] in
