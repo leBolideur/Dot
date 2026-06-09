@@ -46,7 +46,7 @@ and parse_call tokens =
   let expr, rest = parse_primary tokens in
   match rest with
   | [] -> failwith "Error on parse_call"
-  | { kind = IDENT fname} :: { kind = LPAREN } :: tl ->
+  | { kind = IDENT fname } :: { kind = LPAREN } :: tl ->
     let args, rest = parse_call_args tl in
     (Call (fname, args), rest)
   | _ :: tl -> (expr, tl)
@@ -112,8 +112,7 @@ let check_freeze tokens =
   match tokens with
   | [] -> failwith "Syntax error on check_freeze"
   | { kind = DOT } :: tl -> (true, tl)
-  | { kind = NEWLINE } :: tl -> (false, tl)
-  | _ :: _ -> failwith "Expected . or newline"
+  | tok :: tl -> (false, tok :: tl)
 
 let rec parse_fun_params tokens acc =
   match tokens with

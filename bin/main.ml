@@ -17,10 +17,9 @@ mul(Nb1, Nb2) ->
   Res
   .
 
-Res = add(mul(10, 2), 9)
+Res = add(1, 9)
+mul(10, 2)
 .print Res
-Res2 = add(10, 50)
-.print Res2
 "
   in
   let tokens = Dot.Lexer.lex input state [] in
